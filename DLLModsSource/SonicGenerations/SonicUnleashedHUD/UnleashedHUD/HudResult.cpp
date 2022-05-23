@@ -236,7 +236,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			if (((1 << (0 & 0x1F)) & *(uint32_t*)((uint32_t)This + 580 + 4 * (0 >> 5))) != 0)
 			{
 				rcResultNewRecordTime->SetPosition(newRecordX, 0.32083333f * 720.0f);
-				HudResult_PlayMotion(rcResultNewRecordTime, "motion_so_ev");
+				HudResult_PlayMotion(rcResultNewRecordTime, motion_so_ev);
 				hasNewRecord = true;
 			}
 			else
@@ -248,7 +248,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			if (((1 << (2 & 0x1F)) & *(uint32_t*)((uint32_t)This + 580 + 4 * (2 >> 5))) != 0)
 			{
 				rcResultNewRecordScore->SetPosition(newRecordX, 0.7861111f * 720.0f);
-				HudResult_PlayMotion(rcResultNewRecordScore, "motion_so_ev");
+				HudResult_PlayMotion(rcResultNewRecordScore, motion_so_ev);
 				hasNewRecord = true;
 			}
 			else
