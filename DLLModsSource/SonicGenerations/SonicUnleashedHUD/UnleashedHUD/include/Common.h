@@ -23,6 +23,7 @@ uint32_t* const BACKBUFFER_HEIGHT = (uint32_t*)0x1DFDDE0;
 
 uint32_t const CStringConstructor = 0x6621A0;
 uint32_t const CStringDestructor = 0x661550;
+using SharedPtrTypeless = boost::shared_ptr<void>;
 
 enum SonicCollision : uint32_t
 {
@@ -924,6 +925,28 @@ namespace Common
 		uint32_t** hudCount = (uint32_t**)0x1E66B40;
 		if (!*hudCount) return false;
 		return (*hudCount)[2] > 0;
+	}
+
+	inline void PlaySoundStatic(SharedPtrTypeless& soundHandle, uint32_t cueID)
+	{
+		uint32_t* syncObject = *(uint32_t**)0x1E79044;
+		if (syncObject)
+		{
+			FUNCTION_PTR(void*, __thiscall, sub_75FA60, 0x75FA60, void* This, SharedPtrTypeless&, uint32_t cueId);
+			sub_75FA60((void*)syncObject[8], soundHandle, cueID);
+		}
+	}
+	
+	inline CSonicStateFlags* GetSonicStateFlags()
+	{
+		auto* const context = reinterpret_cast<int*>(*PLAYER_CONTEXT);
+		return reinterpret_cast<CSonicStateFlags*>(*reinterpret_cast<int*>(context[0x14D] + 4));
+	}
+	
+	inline bool IsPlayerSuper()
+	{
+		if (!*PLAYER_CONTEXT) return false;
+		return GetSonicStateFlags()->InvokeSuperSonic;
 	}
 
 	inline bool IsFileExist(std::string const& file)

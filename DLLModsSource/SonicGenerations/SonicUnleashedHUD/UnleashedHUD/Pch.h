@@ -15,12 +15,13 @@
 #include <string>
 
 // Dependencies
-#include "ArchiveTreePatcher.h"
+#include "include\Helpers.h"
+#include "include\INIReader.h"
 #include "include\Common.h"
+#include "ArchiveTreePatcher.h"
 #include "Configuration.h"
 #include "DllMain.h"
 #include "HudSonicStage.h"
-#include "include\Helpers.h"
-#include "include\INIReader.h"
+#include "HudResult.h"
 #include "Patches.h"
 #include "Resources.h"
