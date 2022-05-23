@@ -27,12 +27,12 @@ public:
 
 	enum ResultRankType : int
 	{
+		E = -1,
 		D,
 		C,
 		B,
 		A,
-		S,
-		E
+		S
 	};
 
 	struct ResultData
