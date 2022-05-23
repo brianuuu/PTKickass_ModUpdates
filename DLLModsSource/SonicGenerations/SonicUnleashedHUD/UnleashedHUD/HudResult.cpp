@@ -316,7 +316,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	// Total/New record sfx
 	if (m_resultState == HudResult::ResultState::NewRecord)
 	{
-		if (rcResultNewRecordScore && rcResultNewRecordScore->m_MotionFrame >= 3.0f && !m_soundState.m_total)
+		if (m_resultTimer >= 0.0667f && !m_soundState.m_total)
 		{
 			m_soundState.m_total = true;
 
@@ -334,7 +334,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	// Rank slam/rank quote sfx
 	if (m_resultState == HudResult::ResultState::Rank)
 	{
-		if (rcResultRank && rcResultRank->m_MotionFrame >= 9.0f && !m_soundState.m_rank)
+		if (m_resultTimer >= 0.1667f && !m_soundState.m_rank)
 		{
 			m_soundState.m_rank = true;
 
@@ -353,7 +353,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			Common::PlaySoundStatic(rankSoundHandle, cueID);
 		}
 
-		if (!Common::IsPlayerSuper() && rcResultRank && rcResultRank->m_MotionFrame >= 40.0f && !m_soundState.m_rankVoice)
+		if (!Common::IsPlayerSuper() && m_resultTimer >= 0.6833f && !m_soundState.m_rankVoice)
 		{
 			m_soundState.m_rankVoice = true;
 
@@ -373,7 +373,8 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		}
 	}
 	
-
+	// TODO: Do Sonic clapping in rank C
+	
 	// State transition
 	switch (m_resultState)
 	{
