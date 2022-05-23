@@ -1,4 +1,5 @@
 #include "HudResult.h"
+#include "HudSonicStage.h"
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spResult;
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectResult;
@@ -68,9 +69,16 @@ HOOK(int, __fastcall, HudResult_CStateGoalFadeBeforeBegin, 0xCFE080, uint32_t* T
 		m_resultData = *(HudResult::ResultData*)(This[2] + 0x16C);
 
 		// Calculate scores
-		m_stageData.m_ringScore = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_RingCount * 100.0f;
-		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+		uint32_t ringCount = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_RingCount;
+		m_stageData.m_ringScore = ringCount * 100.0f;
+		if (!HudSonicStage::scoreEnabled)
 		{
+			// Set to Generations ring score if score is not enabled
+			m_stageData.m_ringScore = min(5000, ringCount * 50);
+		}
+		else if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+		{
+			// Get stats from Score Generations
 			auto stats = ScoreGenerationsAPI::GetStatistics();
 			float const timeBonus = ScoreGenerationsAPI::ComputeTimeBonus();
 			m_stageData.m_speedScore = ScoreGenerationsAPI::ComputeSpeedBonus();
@@ -107,7 +115,7 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 	rcResultTitle = rcProjectResult->CreateScene("result_title");
 	rcResultTitle->SetHideFlag(true);
 
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < HudResult::ResultNumType::COUNT; i++)
 	{
 		rcResultNum[i] = rcProjectResult->CreateScene((std::string("result_num_") + std::to_string(i + 1)).c_str());
 		rcResultNum[i]->SetHideFlag(true);
@@ -189,38 +197,50 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 					static char buffer[16];
 					sprintf(buffer, "%02d:%02d:%02d", minute, second, millisecond);
 					rcResultNum[i]->GetNode("time_num")->SetText(buffer);
+					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					break;
 				}
 				case HudResult::ResultNumType::RINGS:
 				{
-					// This will not be ring score if Score Generations is not enabled, but we don't care
 					rcResultNum[i]->GetNode("num_2")->SetText(std::to_string((int)m_stageData.m_ringScore).c_str());
+					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					break;
 				}
 				case HudResult::ResultNumType::SPEED:
 				{
-					rcResultNum[i]->GetNode("num_3")->SetText(std::to_string((int)m_stageData.m_speedScore).c_str());
+					if (HudSonicStage::scoreEnabled && !Common::IsCurrentStageBossBattle())
+					{
+						rcResultNum[i]->GetNode("num_3")->SetText(std::to_string((int)m_stageData.m_speedScore).c_str());
+						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
+					}
 					break;
 				}
 				case HudResult::ResultNumType::ENEMY:
 				{
-					rcResultNum[i]->GetNode("num_4")->SetText(std::to_string((int)m_stageData.m_enemyScore).c_str());
+					if (HudSonicStage::scoreEnabled && !Common::IsCurrentStageBossBattle())
+					{
+						rcResultNum[i]->GetNode("num_4")->SetText(std::to_string((int)m_stageData.m_enemyScore).c_str());
+						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
+					}
 					break;
 				}
 				case HudResult::ResultNumType::TRICKS:
 				{
-					rcResultNum[i]->GetNode("num_5")->SetText(std::to_string((int)m_stageData.m_trickScore).c_str());
+					if (HudSonicStage::scoreEnabled && !*pClassicSonicContext && !Common::IsCurrentStageBossBattle())
+					{
+						rcResultNum[i]->GetNode("num_5")->SetText(std::to_string((int)m_stageData.m_trickScore).c_str());
+						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
+					}
 					break;
 				}
 				case HudResult::ResultNumType::TOTAL:
 				{
 					rcResultNum[i]->GetNode("num_6")->SetText(std::to_string(m_resultData.m_score).c_str());
+					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					break;
 				}
 				default: break;
 				}
-
-				HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 			}
 			break;
 		}
@@ -314,7 +334,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	if (m_resultState == HudResult::ResultState::Main)
 	{
 		static float barTime[] = { 1.0f, 1.18333f, 1.3333f, 1.45f };
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < (HudSonicStage::scoreEnabled && !Common::IsCurrentStageBossBattle() ? (*pClassicSonicContext ? 3 : 4) : 1); i++)
 		{
 			if (m_resultTimer > barTime[i] && !m_soundState.m_bar[i])
 			{

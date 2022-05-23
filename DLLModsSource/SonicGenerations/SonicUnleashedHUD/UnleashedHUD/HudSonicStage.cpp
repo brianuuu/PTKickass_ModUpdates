@@ -26,7 +26,7 @@ size_t itemCountDenominator;
 float speed;
 size_t actionCount;
 hh::math::CVector2 infoCustomPos;
-bool scoreEnabled;
+bool HudSonicStage::scoreEnabled;
 
 float xAspectOffset = 0.0f;
 float yAspectOffset = 0.0f;
@@ -157,7 +157,7 @@ void __declspec(naked) GetScoreEnabled()
 	static uint32_t returnAddress = 0x109C254;
 	__asm
 	{
-		mov	scoreEnabled, 1
+		mov	HudSonicStage::scoreEnabled, 1
 		jmp[returnAddress]
 	}
 }
@@ -303,7 +303,7 @@ HOOK(void, __fastcall, ProcMsgChangeCustomHud, 0x1096FF0, Sonic::CGameObject* Th
 
 HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObject* This)
 {
-	scoreEnabled = false;
+	HudSonicStage::scoreEnabled = false;
 	originalCHudSonicStageDelayProcessImp(This);
 	CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 
@@ -407,7 +407,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		FreezeMotion(rcGaugeFrame.Get());
 	}
 
-	if (scoreEnabled) // Score
+	if (HudSonicStage::scoreEnabled) // Score
 	{
 		rcScoreCount = rcPlayScreen->CreateScene("score_count");
 		rcScoreCount->SetPosition(0, offset);
