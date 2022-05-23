@@ -16,6 +16,9 @@ float m_resultTimer = 0.0f;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
 HudResult::ResultState m_resultStateNew = HudResult::ResultState::Idle;
 
+float m_enemyMultiplier = 0.0f;
+float m_rainbowRingMultiplier = 0.0f;
+
 float m_stageTime = 0.0f;
 HudResult::ResultData m_resultData;
 HudResult::StageData m_stageData;
@@ -63,6 +66,17 @@ HOOK(int, __fastcall, HudResult_CStateGoalFadeBeforeBegin, 0xCFE080, uint32_t* T
 
 		m_stageTime = *(float*)Common::GetMultiLevelAddress(This[2] + 0x60, { 0x8, 0x184 });
 		m_resultData = *(HudResult::ResultData*)(This[2] + 0x16C);
+
+		// Calculate scores
+		m_stageData.m_ringScore = Sonic::Player::CPlayerSpeedContext::GetInstance()->m_RingCount * 100.0f;
+		if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
+		{
+			auto stats = ScoreGenerationsAPI::GetStatistics();
+			float const timeBonus = ScoreGenerationsAPI::ComputeTimeBonus();
+			m_stageData.m_speedScore = ScoreGenerationsAPI::ComputeSpeedBonus();
+			m_stageData.m_enemyScore = stats.totalEnemies * m_enemyMultiplier;
+			m_stageData.m_trickScore = max(0.0f, m_resultData.m_score - m_stageData.m_ringScore - timeBonus - m_stageData.m_speedScore - m_stageData.m_enemyScore);
+		}
 	}
 	return result;
 }
@@ -179,25 +193,23 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 				}
 				case HudResult::ResultNumType::RINGS:
 				{
-					// TODO: Change this to match Generations if ScoreGen is not enabled
-					auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-					int score = context->m_RingCount * 100;
-					rcResultNum[i]->GetNode("num_2")->SetText(std::to_string(score).c_str());
+					// This will not be ring score if Score Generations is not enabled, but we don't care
+					rcResultNum[i]->GetNode("num_2")->SetText(std::to_string((int)m_stageData.m_ringScore).c_str());
 					break;
 				}
 				case HudResult::ResultNumType::SPEED:
 				{
-					// TODO:
+					rcResultNum[i]->GetNode("num_3")->SetText(std::to_string((int)m_stageData.m_speedScore).c_str());
 					break;
 				}
 				case HudResult::ResultNumType::ENEMY:
 				{
-					// TODO:
+					rcResultNum[i]->GetNode("num_4")->SetText(std::to_string((int)m_stageData.m_enemyScore).c_str());
 					break;
 				}
 				case HudResult::ResultNumType::TRICKS:
 				{
-					// TODO:
+					rcResultNum[i]->GetNode("num_5")->SetText(std::to_string((int)m_stageData.m_trickScore).c_str());
 					break;
 				}
 				case HudResult::ResultNumType::TOTAL:
@@ -429,8 +441,71 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	}
 }
 
+HOOK(int, __fastcall, HudResult_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+	m_stageData = HudResult::StageData();
+	return originalHudResult_MsgRestartStage(This, Edx, message);
+}
+
+HOOK(void, __fastcall, HudResult_LapTimeHud, 0x1097640, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
+{
+	originalHudResult_LapTimeHud(This, Edx, in_rMsg);
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (!context) return;
+
+	float score = max(0.0f, context->m_Velocity.norm() - 20.0f) * 150.0f;
+	m_stageData.m_speedScore = max(m_stageData.m_speedScore, score);
+	printf("[Unleashed HUD] Speed Score = %.f\n", m_stageData.m_speedScore);
+}
+
+void AddEnemyScore()
+{
+	m_stageData.m_enemyScore += m_enemyMultiplier;
+	printf("[Unleashed HUD] Enemy Score = %.f\n", m_stageData.m_enemyScore);
+}
+
+void __declspec(naked) HudResult_Enemy()
+{
+	static uint32_t returnAddress = 0xBDDD56;
+	__asm
+	{
+		push	eax
+		call	AddEnemyScore
+		pop		eax
+
+		mov     ecx, [eax + 0A4h]
+		jmp		[returnAddress]
+	}
+}
+
+void AddRainbowRingScore()
+{
+	m_stageData.m_trickScore += m_rainbowRingMultiplier;
+	printf("[Unleashed HUD] Trick Score = %.f\n", m_stageData.m_trickScore);
+}
+
+void __declspec(naked) HudResult_RainbowRing()
+{
+	static uint32_t returnAddress = 0x115A947;
+	__asm
+	{
+		push	eax
+		call	AddRainbowRingScore
+		pop		eax
+
+		mov     eax, [eax + 134h]
+		jmp		[returnAddress]
+	}
+}
+
 void HudResult::Install()
 {
+	// Get score multiplier so we can track them
+	INIReader reader("ScoreGenerations.ini");
+	m_enemyMultiplier = reader.GetFloat("Score", "Enemy", 400.0f);
+	m_rainbowRingMultiplier = reader.GetFloat("Score", "RainbowRing", 1000.0f);
+
 	// Use Unleashed goal camera (default) param
 	// CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)
 	WRITE_MEMORY(0x15AF4C3, uint8_t, 0x75);
@@ -450,4 +525,9 @@ void HudResult::Install()
 	WRITE_MEMORY(0x16A1C38, void*, HudResult_CHudResultRemoveCallback);
 	INSTALL_HOOK(HudResult_CHudResultAdvance);
 
+	// Record score stats (only for cosmetics if Score Generations isn't enabled)
+	INSTALL_HOOK(HudResult_MsgRestartStage);
+	INSTALL_HOOK(HudResult_LapTimeHud);
+	WRITE_JUMP(0xBDDD50, HudResult_Enemy);
+	WRITE_JUMP(0x115A941, HudResult_RainbowRing);
 }

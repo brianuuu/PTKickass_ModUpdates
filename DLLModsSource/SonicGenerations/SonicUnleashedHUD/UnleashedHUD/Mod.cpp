@@ -14,7 +14,7 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 
 	ArchiveTreePatcher::Install();
 	HudSonicStage::Install();
-	HudResult::Install();
+	HudResult::Install(); // Must be hooked after HudSonicStage to get checkpoint speed data
 	Patches::Install();
 }
 

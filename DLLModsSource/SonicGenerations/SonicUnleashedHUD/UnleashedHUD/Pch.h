@@ -17,6 +17,7 @@
 // Dependencies
 #include "include\Helpers.h"
 #include "include\INIReader.h"
+#include "include\ScoreGenerationsAPI\ScoreGenerationsAPI.h"
 #include "include\Common.h"
 #include "ArchiveTreePatcher.h"
 #include "Configuration.h"

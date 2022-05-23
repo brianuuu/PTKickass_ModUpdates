@@ -62,9 +62,17 @@ public:
 
 	struct StageData
 	{
-		float m_maxSpeed;
-		int m_enemyCount;
-		int m_trickCount;
+		float m_ringScore;
+		float m_speedScore;
+		float m_enemyScore;
+		float m_trickScore;
+
+		StageData()
+			: m_ringScore(0.0f)
+			, m_speedScore(0.0f)
+			, m_enemyScore(0.0f)
+			, m_trickScore(0.0f)
+		{}
 	};
 
 	static void Install();
