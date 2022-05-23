@@ -430,8 +430,12 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 
 void HudResult::Install()
 {
-	// Invalidate CameraSp so it uses Unleashed camera
-	WRITE_STRING(0x15AF4BC, "");
+	// Use Unleashed goal camera (default) param
+	// CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)
+	WRITE_MEMORY(0x15AF4C3, uint8_t, 0x75);
+	WRITE_MEMORY(0x15D1EBB, uint8_t, 0x75);
+	WRITE_MEMORY(0x15D293B, uint8_t, 0x75);
+	WRITE_MEMORY(0x1A48C7C, float, -0.6053f); // -0.08 from default OffsetRight
 
 	// Prevent using Gen's result
 	INSTALL_HOOK(HudResult_MsgStartGoalResult);
