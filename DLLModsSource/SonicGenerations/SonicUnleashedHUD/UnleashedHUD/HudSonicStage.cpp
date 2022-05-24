@@ -1,3 +1,4 @@
+#include "HudSonicStage.h"
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcPlayScreen;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcPlayerCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcTimeCount;
@@ -28,8 +29,8 @@ size_t actionCount;
 hh::math::CVector2 infoCustomPos;
 bool HudSonicStage::scoreEnabled;
 
-float xAspectOffset = 0.0f;
-float yAspectOffset = 0.0f;
+float HudSonicStage::xAspectOffset = 0.0f;
+float HudSonicStage::yAspectOffset = 0.0f;
 
 boost::shared_ptr<Hedgehog::Sound::CSoundHandle> spSpeed01;
 boost::shared_ptr<Hedgehog::Sound::CSoundHandle> spSpeed02[3];
@@ -253,7 +254,7 @@ HOOK(void, __fastcall, ProcMsgNotifyLapTimeHud, 0x1097640, Sonic::CGameObject* T
 		return;
 
 	rcSpeedCount = rcPlayScreen->CreateScene("speed_count");
-	rcSpeedCount->SetPosition(xAspectOffset, 0);
+	rcSpeedCount->SetPosition(HudSonicStage::xAspectOffset, 0);
 	rcSpeedCount->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 
 	const auto playerContext = Sonic::Player::CPlayerSpeedContext::GetInstance();
@@ -307,26 +308,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	originalCHudSonicStageDelayProcessImp(This);
 	CHudSonicStageRemoveCallback(This, nullptr, nullptr);
 
-	if (*(size_t*)0x6F23C6 != 0x75D8C0D9) // Widescreen Support
-	{
-		const float aspect = (float)*(size_t*)0x1DFDDDC / (float)*(size_t*)0x1DFDDE0;
-
-		if (aspect * 9.0f > 16.0f)
-		{
-			xAspectOffset = 720.0f * aspect - 1280.0f;
-			yAspectOffset = 0.0f;
-		}
-		else
-		{
-			xAspectOffset = 0.0f;
-			yAspectOffset = 1280.0f / aspect - 720.0f;
-		}
-	}
-	else 
-	{
-		xAspectOffset = 0.0f;
-		yAspectOffset = 0.0f;
-	}
+	HudSonicStage::CalculateAspectOffsets();
 
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
@@ -398,9 +380,9 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcRingEnergyGauge = rcPlayScreen->CreateScene("so_ringenagy_gauge");
 		rcGaugeFrame = rcPlayScreen->CreateScene("gauge_frame");
 
-		rcSpeedGauge->SetPosition(0, yAspectOffset);
-		rcRingEnergyGauge->SetPosition(0, yAspectOffset);
-		rcGaugeFrame->SetPosition(0, yAspectOffset);
+		rcSpeedGauge->SetPosition(0, HudSonicStage::yAspectOffset);
+		rcRingEnergyGauge->SetPosition(0, HudSonicStage::yAspectOffset);
+		rcGaugeFrame->SetPosition(0, HudSonicStage::yAspectOffset);
 
 		FreezeMotion(rcSpeedGauge.Get());
 		FreezeMotion(rcRingEnergyGauge.Get());
@@ -444,7 +426,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		else
 		{
 			rcRingCount = rcPlayScreen->CreateScene("ring_count");
-			rcRingCount->SetPosition(0, yAspectOffset);
+			rcRingCount->SetPosition(0, HudSonicStage::yAspectOffset);
 		}
 	}
 
@@ -764,7 +746,7 @@ public:
 			SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
 
 			const auto rcScene = spPlayScreen->m_rcProject->CreateScene("ring_get");
-			rcScene->SetPosition(0, yAspectOffset);
+			rcScene->SetPosition(0, HudSonicStage::yAspectOffset);
 			rcScene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayThenDestroy;
 		}
 	}
@@ -818,4 +800,28 @@ void HudSonicStage::Install()
 	// WRITE_MEMORY(0x109BEF0, uint8_t, 0x90, 0xE9); // Disable mission countdown
 	WRITE_MEMORY(0x109C3E2, uint8_t, 0x90, 0xE9); // Disable mission rank
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
+}
+
+void HudSonicStage::CalculateAspectOffsets()
+{
+	if (*(size_t*)0x6F23C6 != 0x75D8C0D9) // Widescreen Support
+	{
+		const float aspect = (float)*(size_t*)0x1DFDDDC / (float)*(size_t*)0x1DFDDE0;
+
+		if (aspect * 9.0f > 16.0f)
+		{
+			xAspectOffset = 720.0f * aspect - 1280.0f;
+			yAspectOffset = 0.0f;
+		}
+		else
+		{
+			xAspectOffset = 0.0f;
+			yAspectOffset = 1280.0f / aspect - 720.0f;
+		}
+	}
+	else
+	{
+		xAspectOffset = 0.0f;
+		yAspectOffset = 0.0f;
+	}
 }

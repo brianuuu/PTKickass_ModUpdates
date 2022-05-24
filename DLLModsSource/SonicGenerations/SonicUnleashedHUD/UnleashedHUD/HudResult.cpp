@@ -108,6 +108,8 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 	int result = originalHudResult_CHudResultAddCallback(This, Edx, a2, a3, a4);
 	HudResult_CHudResultRemoveCallback(This, nullptr, nullptr);
 
+	HudSonicStage::CalculateAspectOffsets();
+
 	printf("[Unleashed HUD] Result created\n");
 	Sonic::CCsdDatabaseWrapper wrapper(This->m_pMember->m_pGameDocument->m_pMember->m_spDatabase.get());
 
@@ -266,7 +268,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			rcResultNewRecordTime = rcProjectResult->CreateScene("result_newR");
 			if (((1 << (0 & 0x1F)) & *(uint32_t*)((uint32_t)This + 580 + 4 * (0 >> 5))) != 0)
 			{
-				rcResultNewRecordTime->SetPosition(newRecordX, 0.32083333f * 720.0f);
+				rcResultNewRecordTime->SetPosition(HudSonicStage::xAspectOffset / 2 + newRecordX, HudSonicStage::yAspectOffset / 2 + 0.32083333f * 720.0f);
 				HudResult_PlayMotion(rcResultNewRecordTime, motion_so_ev);
 				hasNewRecord = true;
 			}
@@ -278,7 +280,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			rcResultNewRecordScore = rcProjectResult->CreateScene("result_newR");
 			if (((1 << (2 & 0x1F)) & *(uint32_t*)((uint32_t)This + 580 + 4 * (2 >> 5))) != 0)
 			{
-				rcResultNewRecordScore->SetPosition(newRecordX, 0.7861111f * 720.0f);
+				rcResultNewRecordScore->SetPosition(HudSonicStage::xAspectOffset / 2 + newRecordX, HudSonicStage::yAspectOffset / 2 + 0.7861111f * 720.0f);
 				HudResult_PlayMotion(rcResultNewRecordScore, motion_so_ev);
 				hasNewRecord = true;
 			}
@@ -296,7 +298,6 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			rcResultRankText = rcProjectResult->CreateScene("result_rank");
 			HudResult_PlayMotion(rcResultRankText, "Intro_Anim");
 
-			uint32_t cueID;
 			std::string rankSceneName;
 			switch (m_resultData.m_perfectRank)
 			{
@@ -321,7 +322,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 			if (!IsFirstTimePlayStage())
 			{
 				rcResultFooterReplay = rcProjectResult->CreateScene("result_footer");
-				rcResultFooterReplay->SetPosition(-200.0f, 0.0f);
+				rcResultFooterReplay->SetPosition(HudSonicStage::xAspectOffset / 2 - 200.0f, HudSonicStage::yAspectOffset / 2);
 				rcResultFooterReplay->GetNode("btn_A")->SetPatternIndex(3);
 				rcResultFooterReplay->GetNode("next_txt")->SetPatternIndex(1);
 			}
