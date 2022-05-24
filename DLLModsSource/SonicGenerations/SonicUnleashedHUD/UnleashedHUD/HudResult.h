@@ -85,5 +85,6 @@ public:
 	};
 
 	static void Install();
+	static void GetModelType();
 };
 

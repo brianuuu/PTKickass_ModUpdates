@@ -131,6 +131,7 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spResult, "main", This);
 	}
 
+	HudResult::GetModelType();
 	return result;
 }
 
@@ -594,19 +595,7 @@ HOOK(bool, __fastcall, HudResult_MsgChangeResultState, 0xE27BA0, void* This, voi
 	{
 		if (*(int*)(a2 + 20) == -1)
 		{
-			m_modelType = HudResult::ModelType::Gens;
-			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-			if (context)
-			{
-				if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
-				{
-					m_modelType = HudResult::ModelType::SWA_Hedgehog;
-				}
-				else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
-				{
-					m_modelType = HudResult::ModelType::SWA_Werehog;
-				}
-			}
+			HudResult::GetModelType();
 
 			WRITE_STRING(0x15EFEC4, "SonicRankE");
 			switch (m_modelType)
@@ -691,4 +680,21 @@ void HudResult::Install()
 
 	// E-rank animations
 	INSTALL_HOOK(HudResult_MsgChangeResultState);
+}
+
+void HudResult::GetModelType()
+{
+	m_modelType = HudResult::ModelType::Gens;
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (context)
+	{
+		if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+		{
+			m_modelType = HudResult::ModelType::SWA_Hedgehog;
+		}
+		else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
+		{
+			m_modelType = HudResult::ModelType::SWA_Werehog;
+		}
+	}
 }
