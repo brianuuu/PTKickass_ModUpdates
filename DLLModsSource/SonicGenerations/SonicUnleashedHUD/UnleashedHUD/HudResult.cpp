@@ -131,20 +131,6 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spResult, "main", This);
 	}
 
-	m_modelType = HudResult::ModelType::Gens;
-	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
-	if (context)
-	{
-		if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
-		{
-			m_modelType = HudResult::ModelType::SWA_Hedgehog;
-		}
-		else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
-		{
-			m_modelType = HudResult::ModelType::SWA_Werehog;
-		}
-	}
-
 	return result;
 }
 
