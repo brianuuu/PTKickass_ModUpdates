@@ -409,6 +409,12 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (HudSonicStage::scoreEnabled) // Score
 	{
+		if (isMission)
+		{
+			if (rcCountdown) offset += 50.0f;
+			if (rcItemCount) offset += 50.0f;
+		}
+
 		rcScoreCount = rcPlayScreen->CreateScene("score_count");
 		rcScoreCount->SetPosition(0, offset);
 	}
