@@ -536,7 +536,7 @@ HOOK(void, __fastcall, HudResult_SNG19_JNG_2, 0xD00F70, void* This, void* Edx, i
 	originalHudResult_SNG19_JNG_2(This, Edx, a2);
 }
 
-HOOK(int, __fastcall, HudResult_CStateGoalFadeInBegin, 0xCFD2D0, hh::fnd::CStateMachineBase::CStateBase* This)
+HOOK(void, __fastcall, HudResult_CStateGoalFadeInBegin, 0xCFD2D0, void* This)
 {
 	static const char* Result_Boss = "Result_Boss";
 	static const char* Result = (char*)0x15B38F0;
@@ -557,7 +557,7 @@ HOOK(int, __fastcall, HudResult_CStateGoalFadeInBegin, 0xCFD2D0, hh::fnd::CState
 	// Use Result2 if above 4 (rank E is 0xFFFFFFFF)
 	WRITE_MEMORY(0xCFD4E5, uint8_t, 0x76);
 
-	return originalHudResult_CStateGoalFadeInBegin(This);
+	originalHudResult_CStateGoalFadeInBegin(This);
 }
 
 void HudResult::Install()
