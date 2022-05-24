@@ -47,5 +47,10 @@ public:
 	/// Controlls what button prompts to show in-game.
 	/// </summary>
 	static ButtonType buttonType;
+
+	/// <summary>
+	/// Controlls whether to play unleashed result music.
+	/// </summary>
+	static bool unleashedResultMusic;
 };
 

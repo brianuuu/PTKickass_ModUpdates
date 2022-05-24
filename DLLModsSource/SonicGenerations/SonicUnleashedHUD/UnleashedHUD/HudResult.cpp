@@ -1,5 +1,6 @@
 #include "HudResult.h"
 #include "HudSonicStage.h"
+#include "Configuration.h"
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spResult;
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectResult;
@@ -519,6 +520,46 @@ void __declspec(naked) HudResult_RainbowRing()
 	}
 }
 
+//---------------------------------------------------
+// Result music
+//---------------------------------------------------
+const char* SNG19_JNG_SWA = "SNG19_JNG_SWA";
+HOOK(int, __fastcall, HudResult_SNG19_JNG_1, 0xCFF440, void* This, void* Edx, int a2)
+{
+	WRITE_MEMORY(0xCFF44E, char*, SNG19_JNG_SWA);
+	return originalHudResult_SNG19_JNG_1(This, Edx, a2);
+}
+
+HOOK(void, __fastcall, HudResult_SNG19_JNG_2, 0xD00F70, void* This, void* Edx, int a2)
+{
+	WRITE_MEMORY(0xD01A06, char*, SNG19_JNG_SWA);
+	originalHudResult_SNG19_JNG_2(This, Edx, a2);
+}
+
+HOOK(int, __fastcall, HudResult_CStateGoalFadeInBegin, 0xCFD2D0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	static const char* Result_Boss = "Result_Boss";
+	static const char* Result = (char*)0x15B38F0;
+
+	if (Common::IsCurrentStageBossBattle())
+	{
+		WRITE_MEMORY(0xCFD3C9, char*, Result_Boss);
+	}
+	else
+	{
+		WRITE_MEMORY(0xCFD3C9, char*, Result);
+	}
+
+	// Music length
+	static double length = 6.121;
+	WRITE_MEMORY(0xCFD562, double*, &length);
+
+	// Use Result2 if above 4 (rank E is 0xFFFFFFFF)
+	WRITE_MEMORY(0xCFD4E5, uint8_t, 0x76);
+
+	return originalHudResult_CStateGoalFadeInBegin(This);
+}
+
 void HudResult::Install()
 {
 	// Get score multiplier so we can track them
@@ -550,4 +591,12 @@ void HudResult::Install()
 	INSTALL_HOOK(HudResult_LapTimeHud);
 	WRITE_JUMP(0xBDDD50, HudResult_Enemy);
 	WRITE_JUMP(0x115A941, HudResult_RainbowRing);
+
+	// Patch result music
+	if (Configuration::unleashedResultMusic)
+	{
+		INSTALL_HOOK(HudResult_SNG19_JNG_1);
+		INSTALL_HOOK(HudResult_SNG19_JNG_2);
+		INSTALL_HOOK(HudResult_CStateGoalFadeInBegin);
+	}
 }
