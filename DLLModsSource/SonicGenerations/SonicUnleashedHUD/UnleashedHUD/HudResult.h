@@ -77,6 +77,13 @@ public:
 		{}
 	};
 
+	enum ModelType : int
+	{
+		Gens,
+		SWA_Hedgehog,
+		SWA_Werehog,
+	};
+
 	static void Install();
 };
 

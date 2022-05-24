@@ -25,4 +25,10 @@ extern "C" __declspec(dllexport) void PostInit()
 		MessageBox(nullptr, TEXT("'Score Generations' mod must be lower priority than 'Sonic Unleashed HUD'!"), TEXT("Sonic Unleashed HUD"), MB_ICONERROR);
 		exit(-1);
 	}
+
+	if (GetModuleHandle(TEXT("ERankGenerations.dll")))
+	{
+		MessageBox(nullptr, TEXT("'E-Rank Generations' mod is not compatible with 'Sonic Unleashed HUD'! Please disable it."), TEXT("Sonic Unleashed HUD"), MB_ICONERROR);
+		exit(-1);
+	}
 }

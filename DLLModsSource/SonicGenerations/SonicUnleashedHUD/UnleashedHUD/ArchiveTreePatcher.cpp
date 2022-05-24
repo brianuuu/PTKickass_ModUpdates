@@ -1,7 +1,4 @@
-std::vector<ArchiveDependency> ArchiveTreePatcher::archiveDependencies =
-{
-    { "", {"SonicActionCommon", "SonicActionCommonHud", "SystemCommon", "cmn200", "Guide", "pam_cmn", "StageGate", "Title", "NoticeBoard", "pam000"}}
-};
+std::vector<ArchiveDependency> ArchiveTreePatcher::archiveDependencies = {};
 
 HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const size_t size, void* pDatabase)
 {
@@ -51,24 +48,25 @@ HOOK(bool, __stdcall, ParseArchiveTree, 0xD4C8E0, void* a1, char* pData, const s
 
 void ArchiveTreePatcher::Install()
 {
+	std::vector<std::string> dependencies = { "SonicActionCommon", "SonicActionCommonHud", "SystemCommon", "cmn200", "Guide", "pam_cmn", "StageGate", "Title", "NoticeBoard", "pam000" };
     switch (Configuration::buttonType) 
     {
 		case Configuration::ButtonType::XSX:
-            archiveDependencies.at(0).archive = "XboxSeriesButtons";
+			archiveDependencies.push_back(ArchiveDependency("XboxSeriesButtons", dependencies));
 			break;
 
 		case Configuration::ButtonType::PS3:
-            archiveDependencies.at(0).archive = "PlaystationButtons";
+			archiveDependencies.push_back(ArchiveDependency("PlaystationButtons", dependencies));
 			break;
 
 		case Configuration::ButtonType::Switch:
-            archiveDependencies.at(0).archive = "SwitchProButtons";
+			archiveDependencies.push_back(ArchiveDependency("SwitchProButtons", dependencies));
 			break;
 
 		default:
-            // No need to patch the archive tree when it's XBOX prompts
-            return;
+			break;
     }
 
+	archiveDependencies.push_back(ArchiveDependency("SonicRankE", {}));
     INSTALL_HOOK(ParseArchiveTree);
 }

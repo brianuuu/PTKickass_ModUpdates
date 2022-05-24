@@ -15,7 +15,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultFooterReplay;
 
 bool m_isWerehog = false; // TODO: move this to configuration
 float m_resultTimer = 0.0f;
-bool m_isUnleashedModel = false;
+HudResult::ModelType m_modelType = HudResult::ModelType::Gens;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
 HudResult::ResultState m_resultStateNew = HudResult::ResultState::Idle;
 
@@ -131,11 +131,18 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spResult, "main", This);
 	}
 
-	m_isUnleashedModel = false;
+	m_modelType = HudResult::ModelType::Gens;
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	if (context)
 	{
-		m_isUnleashedModel = (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr);
+		if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+		{
+			m_modelType = HudResult::ModelType::SWA_Hedgehog;
+		}
+		else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
+		{
+			m_modelType = HudResult::ModelType::SWA_Werehog;
+		}
 	}
 
 	return result;
@@ -418,7 +425,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	}
 	
 	// Sonic clapping in rank C (Unleashed Model only)
-	if (m_isUnleashedModel && m_resultData.m_perfectRank == HudResult::ResultRankType::C)
+	if (m_modelType == HudResult::ModelType::SWA_Hedgehog && m_resultData.m_perfectRank == HudResult::ResultRankType::C)
 	{
 		auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 		Sonic::Message::MsgGetAnimationInfo message;
@@ -592,6 +599,65 @@ HOOK(void, __fastcall, HudResult_CStateGoalFadeInBegin, 0xCFD2D0, void* This)
 	originalHudResult_CStateGoalFadeInBegin(This);
 }
 
+//---------------------------------------------------
+// E-rank animations
+//---------------------------------------------------
+HOOK(bool, __fastcall, HudResult_MsgChangeResultState, 0xE27BA0, void* This, void* Edx, uint32_t a2)
+{
+	if (!*(int*)(a2 + 16))
+	{
+		if (*(int*)(a2 + 20) == -1)
+		{
+			m_modelType = HudResult::ModelType::Gens;
+			auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+			if (context)
+			{
+				if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+				{
+					m_modelType = HudResult::ModelType::SWA_Hedgehog;
+				}
+				else if (context->m_pPlayer->m_spCharacterModel->GetNode("EvilRoot") != nullptr)
+				{
+					m_modelType = HudResult::ModelType::SWA_Werehog;
+				}
+			}
+
+			WRITE_STRING(0x15EFEC4, "SonicRankE");
+			switch (m_modelType)
+			{
+			case HudResult::ModelType::Gens:
+				WRITE_STRING(0x15E8E80, "sn_result04");
+				WRITE_STRING(0x15E8E6C, "sn_result04_loop");
+				WRITE_STRING(0x15D60F4, "ssn_result04");
+				WRITE_STRING(0x15D60E0, "ssn_result04_loop");
+				break;
+			case HudResult::ModelType::SWA_Hedgehog:
+				WRITE_STRING(0x15E8E80, "so_result04");
+				WRITE_STRING(0x15E8E6C, "so_result04_loop");
+				WRITE_STRING(0x15D60F4, "so_result04");
+				WRITE_STRING(0x15D60E0, "so_result04_loop");
+				break;
+			case HudResult::ModelType::SWA_Werehog:
+				WRITE_STRING(0x15E8E80, "ev_result04");
+				WRITE_STRING(0x15E8E6C, "ev_result04_loop");
+				WRITE_STRING(0x15D60F4, "sev_result04");
+				WRITE_STRING(0x15D60E0, "sev_result04_loop");
+				break;
+			}
+		}
+		else
+		{
+			WRITE_STRING(0x15EFEC4, "SonicRankD");
+			WRITE_STRING(0x15E8E80, "sn_result04");
+			WRITE_STRING(0x15E8E6C, "sn_result04_loop");
+			WRITE_STRING(0x15D60F4, "ssn_result04");
+			WRITE_STRING(0x15D60E0, "ssn_result04_loop");
+		}
+	}
+
+	return originalHudResult_MsgChangeResultState(This, Edx, a2);
+}
+
 void HudResult::Install()
 {
 	// Get score multiplier so we can track them
@@ -636,4 +702,7 @@ void HudResult::Install()
 		// Changed to signed comparison to include E-rank (-1)
 		WRITE_MEMORY(0xCFD4E5, uint8_t, 0x7D);
 	}
+
+	// E-rank animations
+	INSTALL_HOOK(HudResult_MsgChangeResultState);
 }
