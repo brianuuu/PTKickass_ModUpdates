@@ -49,6 +49,23 @@
           "DefaultValue": 0
         }
       ]
+    },
+	{
+      "Name": "Music",
+      "DisplayName": "Music",
+      "Elements": [
+        {
+          "Name": "resultMusic",
+          "Description": [
+            "Enable this to play Sonic Unleashed's reulst music, including Boss varient!"
+          ],
+          "DisplayName": "Unleashed Result Music",
+          "Type": "bool",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": true
+        }
+      ]
     }
   ],
   "Enums": {
