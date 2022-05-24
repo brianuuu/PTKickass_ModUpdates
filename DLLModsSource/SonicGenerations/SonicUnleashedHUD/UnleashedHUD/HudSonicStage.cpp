@@ -781,6 +781,14 @@ HOOK(void, __fastcall, CObjRingProcMsgHitEventCollision, 0x10534B0, Sonic::CGame
 	originalCObjRingProcMsgHitEventCollision(This, Edx, in_rMsg);
 }
 
+HOOK(int, __fastcall, ProcMsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
+{
+	if (rcSpeedCount)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcSpeedCount);
+
+	return originalProcMsgRestartStage(This, Edx, message);
+}
+
 void HudSonicStage::Install()
 {
 	INSTALL_HOOK(ProcMsgGetMissionLimitTime);
@@ -793,6 +801,7 @@ void HudSonicStage::Install()
 	INSTALL_HOOK(CHudSonicStageUpdateParallel);
 	INSTALL_HOOK(ProcMsgSetPinballHud);
 	INSTALL_HOOK(CObjRingProcMsgHitEventCollision);
+	INSTALL_HOOK(ProcMsgRestartStage);
 
 	WRITE_JUMP(0x109C1DC, GetScoreEnabled);
 
