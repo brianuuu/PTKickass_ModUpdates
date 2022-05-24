@@ -15,6 +15,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultFooterReplay;
 
 bool m_isWerehog = false; // TODO: move this to configuration
 float m_resultTimer = 0.0f;
+bool m_isUnleashedModel = false;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
 HudResult::ResultState m_resultStateNew = HudResult::ResultState::Idle;
 
@@ -128,6 +129,13 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 		Sonic::CGameDocument::GetInstance()->AddGameObject(spResult, "main", This);
 	}
 
+	m_isUnleashedModel = false;
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (context)
+	{
+		m_isUnleashedModel = (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr);
+	}
+
 	return result;
 }
 
@@ -155,6 +163,8 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		// We are finished
 		HudResult_CHudResultRemoveCallback(This, nullptr, nullptr);
 		WRITE_MEMORY(0x10B96E6, uint8_t, 0xE8, 0x85, 0xD2, 0xFF, 0xFF);
+		WRITE_MEMORY(0x10B9A7C, uint8_t, 0xE8, 0xCF, 0x7A, 0x5A, 0xFF);
+		WRITE_MEMORY(0x10B9976, uint8_t, 0xE8, 0xD5, 0x7B, 0x5A, 0xFF);
 		return;
 	}
 
@@ -406,7 +416,26 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		}
 	}
 	
-	// TODO: Do Sonic clapping in rank C
+	// Sonic clapping in rank C (Unleashed Model only)
+	if (m_isUnleashedModel && m_resultData.m_perfectRank == HudResult::ResultRankType::C)
+	{
+		auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		Sonic::Message::MsgGetAnimationInfo message;
+		context->m_pPlayer->ProcessMessage(message, true);
+		if (std::strstr(message.m_Name.c_str(), "ResultRankC_Link") != 0)
+		{
+			static float clapFrame[] = { 91.0f, 109.0f, 125.0f, 141.0f };
+			for (int i = 0; i < 4; i++)
+			{
+				if (message.m_Frame >= clapFrame[i] && !m_soundState.m_rankCClaps[i])
+				{
+					m_soundState.m_rankCClaps[i] = true;
+					static SharedPtrTypeless clapSoundHandle;
+					Common::PlaySoundStatic(clapSoundHandle, 1000054);
+				}
+			}
+		}
+	}
 	
 	// State transition
 	switch (m_resultState)
@@ -450,10 +479,12 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
 			WRITE_JUMP(0x10B96E6, (void*)0x10B974B);
+			WRITE_NOP(0x10B9976, 5);
 		}
 		else if (!IsFirstTimePlayStage() && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
 		{
 			WRITE_JUMP(0x10B96E6, (void*)0x10B999F);
+			WRITE_NOP(0x10B9A7C, 5);
 		}
 
 		break;
@@ -598,5 +629,10 @@ void HudResult::Install()
 		INSTALL_HOOK(HudResult_SNG19_JNG_1);
 		INSTALL_HOOK(HudResult_SNG19_JNG_2);
 		INSTALL_HOOK(HudResult_CStateGoalFadeInBegin);
+	}
+	else
+	{
+		// Changed to signed comparison to include E-rank (-1)
+		WRITE_MEMORY(0xCFD4E5, uint8_t, 0x7D);
 	}
 }

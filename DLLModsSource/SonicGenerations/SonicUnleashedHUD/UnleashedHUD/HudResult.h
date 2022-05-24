@@ -51,12 +51,14 @@ public:
 		bool m_total;
 		bool m_rank;
 		bool m_rankVoice;
+		bool m_rankCClaps[4];
 
 		ResultSoundState()
 			: m_bar{false, false, false, false, false, false}
 			, m_total(false)
 			, m_rank(false)
 			, m_rankVoice(false)
+			, m_rankCClaps{false, false, false, false}
 		{}
 	};
 
