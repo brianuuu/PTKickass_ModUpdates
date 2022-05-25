@@ -6,5 +6,7 @@ public:
 
 	static void StartFadeOut();
 	static bool IsFadeOutCompleted();
+	static void StartResidentLoading();
+	static void EndResidentLoading();
 };
 
