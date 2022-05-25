@@ -619,8 +619,8 @@ HOOK(bool, __fastcall, HudResult_MsgChangeResultState, 0xE27BA0, void* This, voi
 			case HudResult::ModelType::SWA_Hedgehog:
 				WRITE_STRING(0x15E8E80, "so_result04");
 				WRITE_STRING(0x15E8E6C, "so_result04_loop");
-				WRITE_STRING(0x15D60F4, "so_result04");
-				WRITE_STRING(0x15D60E0, "so_result04_loop");
+				WRITE_STRING(0x15D60F4, "sso_result04");
+				WRITE_STRING(0x15D60E0, "sso_result04_loop");
 				break;
 			case HudResult::ModelType::SWA_Werehog:
 				WRITE_STRING(0x15E8E80, "ev_result04");
