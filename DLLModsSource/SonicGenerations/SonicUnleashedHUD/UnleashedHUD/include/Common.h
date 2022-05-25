@@ -920,6 +920,11 @@ namespace Common
 		return stageID >= 0x13 && stageID <= 0x1A;
 	}
 
+	inline bool IsCurrentStageMission()
+	{
+		return !IsCurrentStageBossBattle() && (GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
+	}
+
 	inline bool IsAtLoadingScreen()
 	{
 		uint32_t** hudCount = (uint32_t**)0x1E66B40;
