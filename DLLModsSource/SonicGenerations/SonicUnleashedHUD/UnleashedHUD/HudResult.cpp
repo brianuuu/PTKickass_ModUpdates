@@ -1,5 +1,6 @@
 #include "HudResult.h"
 #include "HudSonicStage.h"
+#include "HudLoading.h"
 #include "Configuration.h"
 
 boost::shared_ptr<Sonic::CGameObjectCSD> spResult;
@@ -137,6 +138,7 @@ HOOK(int, __fastcall, HudResult_CHudResultAddCallback, 0x10B8ED0, Sonic::CGameOb
 
 void HudResult_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, bool loop = false)
 {
+	if (!scene) return;
 	scene->SetHideFlag(false);
 	scene->SetMotion(motion);
 	scene->SetMotionFrame(0.0f);
@@ -153,15 +155,18 @@ float const cResultFooterDelay = 2.0f;
 bool hasNewRecord = false;
 HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
-	originalHudResult_CHudResultAdvance(This, Edx, in_rUpdateInfo);
-	if (*(uint32_t*)0x10B96E6 != 0xFFD285E8)
+	if (HudLoading::IsFadeOutCompleted())
 	{
-		// We are finished
-		HudResult_CHudResultRemoveCallback(This, nullptr, nullptr);
-		WRITE_MEMORY(0x10B96E6, uint8_t, 0xE8, 0x85, 0xD2, 0xFF, 0xFF);
-		WRITE_MEMORY(0x10B9A7C, uint8_t, 0xE8, 0xCF, 0x7A, 0x5A, 0xFF);
-		WRITE_MEMORY(0x10B9976, uint8_t, 0xE8, 0xD5, 0x7B, 0x5A, 0xFF);
-		return;
+		originalHudResult_CHudResultAdvance(This, Edx, in_rUpdateInfo);
+		if (*(uint32_t*)0x10B96E6 != 0xFFD285E8)
+		{
+			// We are finished
+			HudResult_CHudResultRemoveCallback(This, nullptr, nullptr);
+			WRITE_MEMORY(0x10B96E6, uint8_t, 0xE8, 0x85, 0xD2, 0xFF, 0xFF);
+			WRITE_MEMORY(0x10B9A7C, uint8_t, 0xE8, 0xCF, 0x7A, 0x5A, 0xFF);
+			WRITE_MEMORY(0x10B9976, uint8_t, 0xE8, 0xD5, 0x7B, 0x5A, 0xFF);
+			return;
+		}
 	}
 
 	FUNCTION_PTR(bool, __cdecl, IsFirstTimePlayStage, 0x10B7BB0);
@@ -470,16 +475,21 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	}
 	case HudResult::ResultState::Footer:
 	{
+		static SharedPtrTypeless soundHandle;
 		Sonic::SPadState const* padState = &Sonic::CInputState::GetInstance()->GetPadState();
 		if (padState->IsTapped(Sonic::EKeyState::eKeyState_A))
 		{
 			WRITE_JUMP(0x10B96E6, (void*)0x10B974B);
 			WRITE_NOP(0x10B9976, 5);
+			Common::PlaySoundStatic(soundHandle, 1000005);
+
+			HudLoading::StartFadeOut();
 		}
 		else if (!IsFirstTimePlayStage() && padState->IsTapped(Sonic::EKeyState::eKeyState_Y))
 		{
 			WRITE_JUMP(0x10B96E6, (void*)0x10B999F);
 			WRITE_NOP(0x10B9A7C, 5);
+			Common::PlaySoundStatic(soundHandle, 1000005);
 		}
 
 		break;
