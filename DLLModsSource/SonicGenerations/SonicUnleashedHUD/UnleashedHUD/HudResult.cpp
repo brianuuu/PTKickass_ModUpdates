@@ -417,7 +417,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	}
 	
 	// Sonic clapping in rank C (Unleashed Model only)
-	if (m_modelType == HudResult::ModelType::SWA_Hedgehog && m_resultData.m_perfectRank == HudResult::ResultRankType::C)
+	if (m_modelType == HudResult::ModelType::SWA_Hedgehog && m_resultData.m_perfectRank == HudResult::ResultRankType::C && !Common::IsPlayerSuper())
 	{
 		auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 		Sonic::Message::MsgGetAnimationInfo message;
@@ -698,7 +698,11 @@ void HudResult::GetModelType()
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
 	if (context)
 	{
-		if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
+		if (!context->m_pPlayer->m_spCharacterModel)
+		{
+			return;
+		}
+		else if (context->m_pPlayer->m_spCharacterModel->GetNode("SonicRoot") != nullptr)
 		{
 			m_modelType = HudResult::ModelType::SWA_Hedgehog;
 		}
