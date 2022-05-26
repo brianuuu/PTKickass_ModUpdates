@@ -396,15 +396,15 @@ HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateOutroBegin, 0x1093410, hh
 	return originalHudLoading_CHudLoadingCStateOutroBegin(This);
 }
 
-HOOK(int, __fastcall, HudLoading_CHudLoadingCStateOutroTitleBegin, 0x1093380, hh::fnd::CStateMachineBase::CStateBase* This)
+HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateOutroAdvance, 0x1092EE0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-	if (m_isEvent)
+	if (m_isEvent && This->m_Time > 0.24f)
 	{
 		rcLoadingEvent->SetHideFlag(true);
 		rcLoadingPDATxt->SetHideFlag(true);
 	}
 
-	return originalHudLoading_CHudLoadingCStateOutroTitleBegin(This);
+	return originalHudLoading_CHudLoadingCStateOutroAdvance(This);
 }
 
 void __declspec(naked) HudLoading_StartResidentLoading()
@@ -567,7 +567,7 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateIntroAdvance);
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateUsualAdvance);
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroBegin);
-	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroTitleBegin);
+	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroAdvance);
 
 	// Put resident loading layer below loading
 	WRITE_MEMORY(0xD6AE00, uint32_t, 0x1E66C20);
