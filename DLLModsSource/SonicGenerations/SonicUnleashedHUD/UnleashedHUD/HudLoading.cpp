@@ -192,6 +192,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingPDATxt;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingInfo;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingEvent;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingBG2;
+bool m_isBG1Intro = false;
 
 void HudLoading_CreateScene(hh::fnd::CStateMachineBase::CStateBase* This)
 {
@@ -273,6 +274,7 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 	}
 	else
 	{
+		m_isBG1Intro = true;
 		HudLoading_PlayMotion(rcLoadingBG1, "Intro_Anim", 100.0f);
 
 		uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
@@ -383,6 +385,7 @@ HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateOutroBegin, 0x1093410, hh
 {
 	if (!m_isEvent)
 	{
+		m_isBG1Intro = false;
 		HudLoading_PlayMotion(rcLoadingBG1, "Outro_Anim");
 		HudLoading_PlayMotion(rcLoadingPDA, "Outro_Anim");
 		HudLoading_PlayMotion(rcLoadingPDATxt, "Outro_Anim");
@@ -519,7 +522,7 @@ HOOK(int, __fastcall, HudLoading_CPauseCStateWindow, 0x42AEE0, hh::fnd::CStateMa
 
 HOOK(void, __fastcall, HudLoading_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
 {
-	if (rcLoadingBG1)
+	if (rcLoadingBG1 && m_isBG1Intro)
 	{
 		rcLoadingBG1->SetHideFlag(true);
 	}
@@ -528,7 +531,9 @@ HOOK(void, __fastcall, HudLoading_CGameplayFlowStage_CStateTitle, 0xCF8F40, void
 
 HOOK(bool, __stdcall, HudLoading_CEventScene, 0xB238C0, void* a1)
 {
-	if (rcLoadingBG1)
+	// m_isBG1Intro is needed to avoid hiding it too early for stages with cutscene
+	// Hiding is only meant for after stage cutscenes!
+	if (rcLoadingBG1 && m_isBG1Intro)
 	{
 		rcLoadingBG1->SetHideFlag(true);
 	}
@@ -587,6 +592,7 @@ void HudLoading::Install()
 void HudLoading::StartFadeOut()
 {
 	if (!rcLoadingBG1) return;
+	m_isBG1Intro = true;
 	HudLoading_PlayMotion(rcLoadingBG1, "Intro_Anim");
 }
 
