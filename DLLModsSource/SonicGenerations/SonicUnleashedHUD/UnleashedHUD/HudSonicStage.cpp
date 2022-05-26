@@ -754,7 +754,8 @@ public:
 
 HOOK(void, __fastcall, CObjRingProcMsgHitEventCollision, 0x10534B0, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
-	if (rcSpeedGauge)
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (rcSpeedGauge && context->m_pPlayer->m_ActorID == in_rMsg.m_SenderActorID)
 	{
 		This->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjGetItem>(
 			This->m_spMatrixNodeTransform->m_Transform.m_Position, This->m_spMatrixNodeTransform->m_Transform.m_Rotation));
