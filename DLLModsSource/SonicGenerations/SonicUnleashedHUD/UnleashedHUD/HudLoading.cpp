@@ -434,6 +434,79 @@ void __declspec(naked) HudLoading_EndResidentLoading()
 	}
 }
 
+HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	uint32_t contextBase = (uint32_t)This->GetContextBase();
+
+	if (!*(bool*)(contextBase + 512)) // Not customize skill
+	{
+		uint32_t v8 = *(uint32_t*)(contextBase + 440);
+		if (v8 != 1)
+		{
+			if (v8 == 2)
+			{
+				HudLoading::StartFadeOut();
+			}
+		}
+		else
+		{
+			// Based on sub_107AC50
+			uint32_t v9 = *(uint32_t*)(contextBase + 520);
+			if (v9 != 7 && v9 != 11 && v9 != 13)
+			{
+				HudLoading::StartFadeOut();
+			}
+		}
+	}
+	originalHudLoading_CHudGateMenuMainCStateOutroBegin(This);
+}
+
+bool m_exitingStage = false;
+void __declspec(naked) HudLoading_ExitStage()
+{
+	static uint32_t returnAddress = 0x42AFBC;
+	__asm
+	{
+		mov		m_exitingStage, 1
+		jmp		[returnAddress]
+	}
+}
+
+bool m_exitFadeStarted = false;
+HOOK(int, __fastcall, HudLoading_CPauseCStateWindow, 0x42AEE0, hh::fnd::CStateMachineBase::CStateBase* This)
+{
+	if (!m_exitingStage)
+	{
+		m_exitFadeStarted = false;
+		WRITE_JUMP(0x42AF2D, HudLoading_ExitStage);
+	}
+	else
+	{
+		if (!m_exitFadeStarted)
+		{
+			HudLoading::StartFadeOut();
+			m_exitFadeStarted = true;
+		}
+		else if (HudLoading::IsFadeOutCompleted())
+		{
+			m_exitingStage = false;
+			m_exitFadeStarted = false;
+			WRITE_MEMORY(0x42AF2D, uint8_t, 0xBA, 0x02, 0x00, 0x00, 0x00);
+		}
+	}
+
+	return originalHudLoading_CPauseCStateWindow(This);
+}
+
+HOOK(void, __fastcall, HudLoading_CGameplayFlowStage_CStateTitle, 0xCF8F40, void* This)
+{
+	if (rcLoadingBG1)
+	{
+		rcLoadingBG1->SetHideFlag(true);
+	}
+	originalHudLoading_CGameplayFlowStage_CStateTitle(This);
+}
+
 void HudLoading::Install()
 {
 	// Load extra archives for loading screens
@@ -474,6 +547,11 @@ void HudLoading::Install()
 	// Resident Loading
 	WRITE_JUMP(0x44A2F3, HudLoading_StartResidentLoading);
 	WRITE_JUMP(0x44A500, HudLoading_EndResidentLoading);
+
+	// Transition out to loading screen
+	INSTALL_HOOK(HudLoading_CHudGateMenuMainCStateOutroBegin);
+	INSTALL_HOOK(HudLoading_CPauseCStateWindow);
+	INSTALL_HOOK(HudLoading_CGameplayFlowStage_CStateTitle);
 }
 
 void HudLoading::StartFadeOut()
