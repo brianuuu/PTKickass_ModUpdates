@@ -324,7 +324,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	rcPosition = rcMissionScreen->CreateScene("position");
 	rcPosition->SetPosition(0, 0);
 
-	isMission = !Common::IsCurrentStageBossBattle() && (Common::GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
+	isMission = Common::IsCurrentStageMission();
 
 	size_t& flags = ((size_t*)This)[151];
 

@@ -916,13 +916,14 @@ namespace Common
 	}
 
 	inline bool IsCurrentStageBossBattle() {
-		uint8_t stageID = (uint8_t)GetCurrentStageID();
+		uint8_t stageID = GetCurrentStageID() & 0xFF;
 		return stageID >= 0x13 && stageID <= 0x1A;
 	}
 
 	inline bool IsCurrentStageMission()
 	{
-		return !IsCurrentStageBossBattle() && (GetCurrentStageID() & (SMT_Mission1 | SMT_Mission2 | SMT_Mission3 | SMT_Mission4 | SMT_Mission5));
+		uint8_t missionNumber = (GetCurrentStageID() & 0xFF00) >> 8;
+		return !IsCurrentStageBossBattle() && missionNumber > 0;
 	}
 
 	inline bool IsAtLoadingScreen()
