@@ -1,4 +1,5 @@
 #include "HudLoading.h"
+#include "Configuration.h"
 
 int m_tailsTextStart = 0;
 float m_tailsTextScrollTimer = 0.1f;
@@ -40,6 +41,149 @@ char const* m_tailsText[] =
 	"</dependency>",
 	"</assembly>",
 };
+
+HudLoading::LoadingArchiveType m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_Gens;
+char const* m_loadingArchiveNames[] =
+{
+	"LoadingGens.ar",
+	"LoadingUP.ar",
+	"LoadingCustom.ar",
+};
+
+void __fastcall HudLoading_ExtraLoadingARLImpl(int a1)
+{
+	uint32_t* v5 = *(uint32_t**)(*(uint32_t*)(a1 + 4) + 200);
+	SharedPtrTypeless a2;
+	char const* name = m_loadingArchiveNames[(int)m_loadingArchiveType];
+	hh::base::CSharedString unused(name);
+	hh::base::CSharedString a4((std::string(name) + "l").c_str());
+	int v37[53] = {};
+
+	FUNCTION_PTR(int*, __thiscall, sub_446F90, 0x446F90, int* This, int, int);
+	sub_446F90(v37, 200, 5);
+
+	FUNCTION_PTR(void*, __thiscall, sub_69C270, 0x69C270, uint32_t * This, SharedPtrTypeless & a2, hh::base::CSharedString const& a3, hh::base::CSharedString const& a4, int* a5);
+	sub_69C270(v5, a2, unused, a4, v37);
+
+	FUNCTION_PTR(int, __thiscall, sub_446E30, 0x446E30, int* This);
+	sub_446E30(v37);
+}
+
+void __declspec(naked) HudLoading_ExtraLoadingARL()
+{
+	static uint32_t sub_446E30 = 0x446E30;
+	static uint32_t returnAddress = 0xD6A362;
+	__asm
+	{
+		call	[sub_446E30]
+		mov		ecx, ebx
+		call	HudLoading_ExtraLoadingARLImpl
+		jmp		[returnAddress]
+	}
+}
+
+void __declspec(naked) HudLoading_ExtraLoadingAR()
+{
+	static uint32_t sub_4FFD50 = 0x4FFD50;
+	static uint32_t sub_4FF000 = 0x4FF000;
+	static uint32_t sub_4FF0C0 = 0x4FF0C0;
+	static uint32_t sub_4FF5B0 = 0x4FF5B0;
+	static uint32_t sub_69AB10 = 0x69AB10;
+	static uint32_t sub_446E30 = 0x446E30;
+	static uint32_t returnAddress = 0xD6A45A;
+	__asm
+	{
+		call	[sub_446E30]
+
+		push    5
+		lea     ecx, [esp + 104h - 0xD8]
+		call    [sub_4FFD50]
+		mov     eax, [ebx + 4]
+		mov     edx, [eax + 90h]
+		sub     esp, 0Ch
+		add     eax, 90h
+		mov     edi, esp
+		sub     esp, 8
+		mov     ecx, esp
+		mov		[ecx], edx
+		mov     eax, [eax + 4]
+		mov		[ecx + 4], eax
+		test    eax, eax
+		jz      loc_D6A39D
+		add     eax, 4
+		mov     ecx, 1
+		lock xadd[eax], ecx
+
+		loc_D6A39D:
+		push    0xD69590
+		call    [sub_4FF000]
+		add     esp, 0Ch
+		lea     esi, [esp + 10Ch - 0xC0]
+		call    [sub_4FF0C0]
+		mov     eax, [esp + 100h - 0xA0]
+		mov     esi, 0xD69430
+		test    eax, eax
+		jz      loc_D6A3E4
+		test    al, 1
+		jnz     loc_D6A3DC
+		and		eax, 0FFFFFFFEh
+		mov     eax, [eax]
+		test    eax, eax
+		jz      loc_D6A3DC
+		lea     edx, [esp + 100h - 0x98]
+		push    2
+		push    edx
+		mov     ecx, edx
+		push    ecx
+		call    eax
+		add     esp, 0Ch
+
+		loc_D6A3DC:
+		mov		[esp + 100h - 0xA0], 0
+
+		loc_D6A3E4:
+		mov     edx, [esp + 100h - 0xDC]
+		push    edx
+		push    esi
+		lea     esi, [esp + 108h - 0xA0]
+		call    [sub_4FF5B0]
+		mov		eax, m_loadingArchiveType
+		mov		ecx, [m_loadingArchiveNames + eax * 4]
+		push    ecx
+		lea     ecx, [esp + 104h - 0xF0]
+		call    [CStringConstructor]
+		push    1
+		push    0
+		lea     eax, [esp + 108h - 0xD8]
+		push    eax
+		mov     eax, [ebx + 4]
+		mov     edx, [eax + 90h]
+		lea     ecx, [esp + 10Ch - 0xF0]
+		push    ecx
+		add     eax, 90h
+		sub     esp, 8
+		mov     ecx, esp
+		mov		[ecx], edx
+		mov     eax, [eax + 4]
+		mov		[ecx + 4], eax
+		test    eax, eax
+		jz      loc_D6A43A
+		add     eax, 4
+		mov     ecx, 1
+		lock xadd[eax], ecx
+		
+		loc_D6A43A:
+		mov     edx, [ebx + 4]
+		mov     ecx, [edx + 0C8h]
+		call    [sub_69AB10]
+		lea     ecx, [esp + 100h - 0xF0]
+		call    [CStringDestructor]
+		lea     ecx, [esp + 100h - 0xD8]
+		call    [sub_446E30]
+
+		jmp		[returnAddress]
+	}
+}
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcProjectLoading;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcLoadingBG1;
@@ -292,6 +436,18 @@ void __declspec(naked) HudLoading_EndResidentLoading()
 
 void HudLoading::Install()
 {
+	// Load extra archives for loading screens
+	if (Common::IsModNameEnabled("Unleashed Project"))
+	{
+		m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_UP;
+	}
+	else if (Common::DoesArchiveExist("LoadingCustom.ar.00"))
+	{
+		m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_Custom;
+	}
+	WRITE_JUMP(0xD6A35D, HudLoading_ExtraLoadingARL);
+	WRITE_JUMP(0xD6A455, HudLoading_ExtraLoadingAR);
+
 	// Always use stage loading even on PAM
 	WRITE_MEMORY(0x1093EB8, uint8_t, 0xEB);
 	WRITE_NOP(0x109273D, 9);

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <filesystem>
 
 // Dependencies
 #include "include\Helpers.h"

@@ -1019,4 +1019,45 @@ namespace Common
 
 		return false;
 	}
+
+	inline bool IsModNameEnabled(std::string const& testModName, std::string* o_iniPath = nullptr)
+	{
+		std::vector<std::string> modIniList;
+		GetModIniList(modIniList);
+		for (size_t i = 0; i < modIniList.size(); i++)
+		{
+			std::string const& config = modIniList[i];
+			INIReader configReader(config);
+			std::string name = configReader.Get("Desc", "Title", "");
+			if (name == testModName)
+			{
+				if (o_iniPath)
+				{
+					*o_iniPath = config;
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	inline bool DoesArchiveExist(std::string const& archiveName)
+	{
+		std::vector<std::string> modFolderList;
+		GetModIniList(modFolderList);
+		for (std::string& folder : modFolderList)
+		{
+			folder = folder.substr(0, folder.length() - 7);
+			for (const auto& dirEntry : std::filesystem::recursive_directory_iterator(folder))
+			{
+				if (dirEntry.path().filename() == archiveName)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
