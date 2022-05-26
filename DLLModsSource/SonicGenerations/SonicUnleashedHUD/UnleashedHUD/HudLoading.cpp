@@ -471,10 +471,22 @@ HOOK(void, __fastcall, HudLoading_CHudGateMenuMainCStateOutroBegin, 0x107B770, h
 bool m_exitingStage = false;
 void __declspec(naked) HudLoading_ExitStage()
 {
-	static uint32_t returnAddress = 0x42AFBC;
+	static uint32_t sub_10A0710 = 0x10A0710;
+	static uint32_t skipAddress = 0x42AFBC;
+	static uint32_t returnAddress = 0x42AF32;
 	__asm
 	{
+		mov     eax, esi
+		call	[sub_10A0710]
+		sub		eax, 1
+		jz		jump
+
+		// exist stage
 		mov		m_exitingStage, 1
+		jmp		[skipAddress]
+
+		// restart stage
+		jump:
 		jmp		[returnAddress]
 	}
 }
@@ -569,6 +581,7 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_CHudGateMenuMainCStateOutroBegin);
 	INSTALL_HOOK(HudLoading_CPauseCStateWindow);
 	INSTALL_HOOK(HudLoading_CGameplayFlowStage_CStateTitle);
+	INSTALL_HOOK(HudLoading_CEventScene);
 }
 
 void HudLoading::StartFadeOut()
