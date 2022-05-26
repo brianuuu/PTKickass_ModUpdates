@@ -273,7 +273,7 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 	}
 	else
 	{
-		HudLoading_PlayMotion(rcLoadingBG1, "Intro_Anim", 29.0f);
+		HudLoading_PlayMotion(rcLoadingBG1, "Intro_Anim", 100.0f);
 
 		uint8_t stageID = Common::GetCurrentStageID() & 0xFF;
 		rcLoadingPDA->GetNode("imgbox")->SetPatternIndex(stageID);
@@ -512,6 +512,15 @@ HOOK(void, __fastcall, HudLoading_CGameplayFlowStage_CStateTitle, 0xCF8F40, void
 		rcLoadingBG1->SetHideFlag(true);
 	}
 	originalHudLoading_CGameplayFlowStage_CStateTitle(This);
+}
+
+HOOK(bool, __stdcall, HudLoading_CEventScene, 0xB238C0, void* a1)
+{
+	if (rcLoadingBG1)
+	{
+		rcLoadingBG1->SetHideFlag(true);
+	}
+	return originalHudLoading_CEventScene(a1);
 }
 
 void HudLoading::Install()
