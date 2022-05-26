@@ -358,11 +358,18 @@ HOOK(int32_t*, __fastcall, HudLoading_CHudLoadingCStateIntroAdvance, 0x10936B0, 
 	return nullptr;
 }
 
+float m_applicationDeltaTime = 0.0f;
+HOOK(void*, __fastcall, HudLoading_UpdateApplication, 0xE7BED0, void* This, void* Edx, float elapsedTime, uint8_t a3)
+{
+	m_applicationDeltaTime = elapsedTime;
+	return originalHudLoading_UpdateApplication(This, Edx, elapsedTime, a3);
+}
+
 HOOK(int, __fastcall, HudLoading_CHudLoadingCStateUsualAdvance, 0x10926E0, hh::fnd::CStateMachineBase::CStateBase* This)
 {
 	HudLoading_SetTailsText();
 
-	m_tailsTextScrollTimer -= This->m_pStateMachine->m_UpdateInfo.DeltaTime;
+	m_tailsTextScrollTimer -= m_applicationDeltaTime;
 	if (m_tailsTextScrollTimer < 0.0f)
 	{
 		m_tailsTextScrollTimer = 0.1f;
@@ -549,6 +556,7 @@ void HudLoading::Install()
 	WRITE_JUMP(0x44A500, HudLoading_EndResidentLoading);
 
 	// Transition out to loading screen
+	INSTALL_HOOK(HudLoading_UpdateApplication);
 	INSTALL_HOOK(HudLoading_CHudGateMenuMainCStateOutroBegin);
 	INSTALL_HOOK(HudLoading_CPauseCStateWindow);
 	INSTALL_HOOK(HudLoading_CGameplayFlowStage_CStateTitle);
