@@ -50,22 +50,32 @@ char const* m_loadingArchiveNames[] =
 	"LoadingCustom.ar",
 };
 
+char const* m_loadingButtonArchiveNames[] =
+{
+	"LoadingXBOX.ar",
+	"LoadingXBOX.ar",
+	"LoadingPS.ar",
+	"LoadingXBOX.ar",
+};
+
 void __fastcall HudLoading_ExtraLoadingARLImpl(int a1)
 {
 	uint32_t* v5 = *(uint32_t**)(*(uint32_t*)(a1 + 4) + 200);
 	SharedPtrTypeless a2;
-	char const* name = m_loadingArchiveNames[(int)m_loadingArchiveType];
-	hh::base::CSharedString unused(name);
-	hh::base::CSharedString a4((std::string(name) + "l").c_str());
 	int v37[53] = {};
 
 	FUNCTION_PTR(int*, __thiscall, sub_446F90, 0x446F90, int* This, int, int);
-	sub_446F90(v37, 200, 5);
-
 	FUNCTION_PTR(void*, __thiscall, sub_69C270, 0x69C270, uint32_t * This, SharedPtrTypeless & a2, hh::base::CSharedString const& a3, hh::base::CSharedString const& a4, int* a5);
-	sub_69C270(v5, a2, unused, a4, v37);
-
 	FUNCTION_PTR(int, __thiscall, sub_446E30, 0x446E30, int* This);
+
+	// Loading stage BG
+	sub_446F90(v37, 200, 5);
+	sub_69C270(v5, a2, "", (std::string(m_loadingArchiveNames[(int)m_loadingArchiveType]) + "l").c_str(), v37);
+	sub_446E30(v37);
+	
+	// Loading buttons
+	sub_446F90(v37, 200, 5);
+	sub_69C270(v5, a2, "", (std::string(m_loadingButtonArchiveNames[(int)Configuration::buttonType]) + "l").c_str(), v37);
 	sub_446E30(v37);
 }
 
@@ -95,6 +105,7 @@ void __declspec(naked) HudLoading_ExtraLoadingAR()
 	{
 		call	[sub_446E30]
 
+		// Loading stage BG
 		push    5
 		lea     ecx, [esp + 104h - 0xD8]
 		call    [sub_4FFD50]
@@ -173,6 +184,93 @@ void __declspec(naked) HudLoading_ExtraLoadingAR()
 		lock xadd[eax], ecx
 		
 		loc_D6A43A:
+		mov     edx, [ebx + 4]
+		mov     ecx, [edx + 0C8h]
+		call    [sub_69AB10]
+		lea     ecx, [esp + 100h - 0xF0]
+		call    [CStringDestructor]
+		lea     ecx, [esp + 100h - 0xD8]
+		call    [sub_446E30]
+
+		// Loading buttons
+		push    5
+		lea     ecx, [esp + 104h - 0xD8]
+		call    [sub_4FFD50]
+		mov     eax, [ebx + 4]
+		mov     edx, [eax + 90h]
+		sub     esp, 0Ch
+		add     eax, 90h
+		mov     edi, esp
+		sub     esp, 8
+		mov     ecx, esp
+		mov		[ecx], edx
+		mov     eax, [eax + 4]
+		mov		[ecx + 4], eax
+		test    eax, eax
+		jz      loc_D6A39D_2
+		add     eax, 4
+		mov     ecx, 1
+		lock xadd[eax], ecx
+
+		loc_D6A39D_2:
+		push    0xD69590
+		call    [sub_4FF000]
+		add     esp, 0Ch
+		lea     esi, [esp + 10Ch - 0xC0]
+		call    [sub_4FF0C0]
+		mov     eax, [esp + 100h - 0xA0]
+		mov     esi, 0xD69430
+		test    eax, eax
+		jz      loc_D6A3E4_2
+		test    al, 1
+		jnz     loc_D6A3DC_2
+		and		eax, 0FFFFFFFEh
+		mov     eax, [eax]
+		test    eax, eax
+		jz      loc_D6A3DC_2
+		lea     edx, [esp + 100h - 0x98]
+		push    2
+		push    edx
+		mov     ecx, edx
+		push    ecx
+		call    eax
+		add     esp, 0Ch
+
+		loc_D6A3DC_2:
+		mov		[esp + 100h - 0xA0], 0
+
+		loc_D6A3E4_2:
+		mov     edx, [esp + 100h - 0xDC]
+		push    edx
+		push    esi
+		lea     esi, [esp + 108h - 0xA0]
+		call    [sub_4FF5B0]
+		mov		eax, Configuration::buttonType
+		mov		ecx, [m_loadingButtonArchiveNames + eax * 4]
+		push    ecx
+		lea     ecx, [esp + 104h - 0xF0]
+		call    [CStringConstructor]
+		push    1
+		push    0
+		lea     eax, [esp + 108h - 0xD8]
+		push    eax
+		mov     eax, [ebx + 4]
+		mov     edx, [eax + 90h]
+		lea     ecx, [esp + 10Ch - 0xF0]
+		push    ecx
+		add     eax, 90h
+		sub     esp, 8
+		mov     ecx, esp
+		mov		[ecx], edx
+		mov     eax, [eax + 4]
+		mov		[ecx + 4], eax
+		test    eax, eax
+		jz      loc_D6A43A_2
+		add     eax, 4
+		mov     ecx, 1
+		lock xadd[eax], ecx
+		
+		loc_D6A43A_2:
 		mov     edx, [ebx + 4]
 		mov     ecx, [edx + 0C8h]
 		call    [sub_69AB10]
@@ -304,11 +402,11 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 			if (stageID == SMT_blb)
 			{
 				hintPattern = 7;
-				HudLoading_PlayMotion(rcLoadingInfo, "360_super");
+				HudLoading_PlayMotion(rcLoadingInfo, Configuration::buttonType == Configuration::ButtonType::PS3 ? "ps3_super" : "360_super");
 			}
 			else
 			{
-				HudLoading_PlayMotion(rcLoadingInfo, "360_sonic3");
+				HudLoading_PlayMotion(rcLoadingInfo, Configuration::buttonType == Configuration::ButtonType::PS3 ? "ps3_sonic3" : "360_sonic3");
 			}
 
 			rcLoadingInfo->GetNode("controller")->SetHideFlag(true);
