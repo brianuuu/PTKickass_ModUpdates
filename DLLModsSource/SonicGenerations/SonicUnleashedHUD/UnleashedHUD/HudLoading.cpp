@@ -672,9 +672,6 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroBegin);
 	INSTALL_HOOK(HudLoading_CHudLoadingCStateOutroAdvance);
 
-	// Put resident loading layer below loading
-	WRITE_MEMORY(0xD6AE00, uint32_t, 0x1E66C20);
-
 	// Resident Loading
 	WRITE_JUMP(0x44A2F3, HudLoading_StartResidentLoading);
 	WRITE_JUMP(0x44A500, HudLoading_EndResidentLoading);
@@ -703,11 +700,14 @@ bool HudLoading::IsFadeOutCompleted()
 void HudLoading::StartResidentLoading()
 {
 	if (!rcLoadingPDATxt) return;
+	m_isBG1Intro = true;
+	HudLoading_PlayMotion(rcLoadingBG1, "Intro_Anim", 100.0f);
 	HudLoading_PlayMotion(rcLoadingPDATxt, "Usual_Anim_2", 0.0f, true);
 }
 
 void HudLoading::EndResidentLoading()
 {
 	if (!rcLoadingPDATxt) return;
+	rcLoadingBG1->SetHideFlag(true);
 	HudLoading_PlayMotion(rcLoadingPDATxt, "Outro_Anim");
 }
