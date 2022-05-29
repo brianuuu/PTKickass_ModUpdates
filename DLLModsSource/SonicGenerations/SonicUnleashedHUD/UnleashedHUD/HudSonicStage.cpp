@@ -478,7 +478,7 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 		const size_t liveCountAddr = Common::GetMultiLevelAddress(0x1E66B34, { 0x4, 0x1B4, 0x7C, 0x9FDC });
 		if (liveCountAddr)
 		{
-			sprintf(text, "%02d", *(size_t*)liveCountAddr);
+			sprintf(text, "%02d", max(0, *(int*)liveCountAddr));
 			rcPlayerCount->GetNode("player")->SetText(text);
 		}
 	}
