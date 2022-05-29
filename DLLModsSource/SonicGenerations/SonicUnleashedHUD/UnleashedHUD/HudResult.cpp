@@ -20,12 +20,19 @@ HudResult::ModelType m_modelType = HudResult::ModelType::Gens;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
 HudResult::ResultState m_resultStateNew = HudResult::ResultState::Idle;
 
-float m_enemyMultiplier = 0.0f;
-float m_rainbowRingMultiplier = 0.0f;
+float m_enemyBonus = 0.0f;
+float m_enemyChainBonus = 0.0f;
+float m_trickBonus = 0.0f;
+float m_trickBonusLimit = 0.0f;
+float m_trickChainMultiplier = 0.0f;
+float m_trickFinishBonus = 0.0f;
+float m_rainbowRingBonus = 0.0f;
 
 float m_stageTime = 0.0f;
 HudResult::ResultData m_resultData;
 HudResult::StageData m_stageData;
+bool m_isEnemyChain = false;
+int m_trickChain = 0;
 HudResult::ResultSoundState m_soundState;
 
 HOOK(void, __fastcall, HudResult_MsgStartGoalResult, 0x10B58A0, uint32_t* This, void* Edx, void* message)
@@ -81,12 +88,8 @@ HOOK(int, __fastcall, HudResult_CStateGoalFadeBeforeBegin, 0xCFE080, uint32_t* T
 		}
 		else if (GetModuleHandle(TEXT("ScoreGenerations.dll")) != nullptr)
 		{
-			// Get stats from Score Generations
-			auto stats = ScoreGenerationsAPI::GetStatistics();
-			float const timeBonus = ScoreGenerationsAPI::ComputeTimeBonus();
+			// Get speed score from Score Generations
 			m_stageData.m_speedScore = ScoreGenerationsAPI::ComputeSpeedBonus();
-			m_stageData.m_enemyScore = stats.totalEnemies * m_enemyMultiplier;
-			m_stageData.m_trickScore = max(0.0f, m_resultData.m_score - m_stageData.m_ringScore - timeBonus - m_stageData.m_speedScore - m_stageData.m_enemyScore);
 		}
 	}
 	return result;
@@ -498,6 +501,11 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	}
 }
 
+void DebugCombinedScore()
+{
+	printf("[Unleashed HUD] Score: %.f\n", m_stageData.m_enemyScore + m_stageData.m_trickScore);
+}
+
 HOOK(int, __fastcall, HudResult_MsgRestartStage, 0xE76810, uint32_t* This, void* Edx, void* message)
 {
 	m_stageData = HudResult::StageData();
@@ -516,10 +524,38 @@ HOOK(void, __fastcall, HudResult_LapTimeHud, 0x1097640, Sonic::CGameObject* This
 	printf("[Unleashed HUD] Speed Score = %.f\n", m_stageData.m_speedScore);
 }
 
+HOOK(void, __fastcall, HudResult_CSonicUpdate, 0xE6BF20, void* This, void* Edx, float* dt)
+{
+	originalHudResult_CSonicUpdate(This, Edx, dt);
+
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	if (!context) return;
+
+	if (context->m_Grounded)
+	{
+		m_isEnemyChain = false;
+	}
+}
+
 void AddEnemyScore()
 {
-	m_stageData.m_enemyScore += m_enemyMultiplier;
-	printf("[Unleashed HUD] Enemy Score = %.f\n", m_stageData.m_enemyScore);
+	m_stageData.m_enemyScore += m_enemyBonus;
+	if (m_isEnemyChain)
+	{
+		m_stageData.m_enemyScore += m_enemyChainBonus;
+		printf("[Unleashed HUD] Enemy Score = %.f (+%.f Chain Bonus)\n", m_stageData.m_enemyScore, m_enemyBonus + m_enemyChainBonus);
+		DebugCombinedScore();
+	}
+	else
+	{
+		printf("[Unleashed HUD] Enemy Score = %.f (+%.f)\n", m_stageData.m_enemyScore, m_enemyBonus);
+		DebugCombinedScore();
+		auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (context)
+		{
+			m_isEnemyChain = !context->m_Grounded;
+		}
+	}
 }
 
 void __declspec(naked) HudResult_Enemy()
@@ -538,8 +574,9 @@ void __declspec(naked) HudResult_Enemy()
 
 void AddRainbowRingScore()
 {
-	m_stageData.m_trickScore += m_rainbowRingMultiplier;
-	printf("[Unleashed HUD] Trick Score = %.f\n", m_stageData.m_trickScore);
+	m_stageData.m_trickScore += m_rainbowRingBonus;
+	printf("[Unleashed HUD] Trick Score = %.f (+%.f Rainbow Ring)\n", m_stageData.m_trickScore, m_rainbowRingBonus);
+	DebugCombinedScore();
 }
 
 void __declspec(naked) HudResult_RainbowRing()
@@ -553,6 +590,47 @@ void __declspec(naked) HudResult_RainbowRing()
 
 		mov     eax, [eax + 134h]
 		jmp		[returnAddress]
+	}
+}
+
+HOOK(int, __fastcall, HudResult_CTrickSimpleBegin, 0xE4B050, uint32_t* This)
+{
+	m_trickChain = 0;
+	return originalHudResult_CTrickSimpleBegin(This);
+}
+
+HOOK(void, __fastcall, HudResult_CTrickSimpleAdvance, 0xE4B3F0, uint32_t* This)
+{
+	uint32_t trickCountPrev = This[35];
+	uint32_t statePrev = This[24];
+	originalHudResult_CTrickSimpleAdvance(This);
+
+	// Performed trick
+	if (This[35] > trickCountPrev)
+	{
+		// Trick level 0
+		if (This[34] == 0)
+		{
+			m_trickChain = 0;
+		}
+
+		m_trickChain++;
+		float bonus = m_trickBonus;
+		for (int i = 0; i < m_trickChain - 1; i++)
+		{
+			bonus = min(m_trickBonusLimit, bonus * m_trickChainMultiplier);
+		}
+		m_stageData.m_trickScore += bonus;
+		printf("[Unleashed HUD] Trick Score = %.f (+%.f Trick Bonus Chain %d)\n", m_stageData.m_trickScore, bonus, m_trickChain);
+		DebugCombinedScore();
+	}
+
+	// Trick finish
+	if (This[24] == 3 && statePrev != 3)
+	{
+		m_stageData.m_trickScore += m_trickFinishBonus;
+		printf("[Unleashed HUD] Trick Score = %.f (+%.f Trick Finish)\n", m_stageData.m_trickScore, m_trickFinishBonus);
+		DebugCombinedScore();
 	}
 }
 
@@ -647,8 +725,13 @@ void HudResult::Install()
 {
 	// Get score multiplier so we can track them
 	INIReader reader("ScoreGenerations.ini");
-	m_enemyMultiplier = reader.GetFloat("Score", "Enemy", 400.0f);
-	m_rainbowRingMultiplier = reader.GetFloat("Score", "RainbowRing", 1000.0f);
+	m_enemyBonus = reader.GetFloat("Score", "Enemy", 300.0f);
+	m_enemyChainBonus = reader.GetFloat("GameplayBonus", "homingChainBonus", 200.0f);
+	m_trickBonus = reader.GetFloat("Score", "Trick", 100.0f);
+	m_trickBonusLimit = reader.GetFloat("GameplayBonus", "trickBonusLimit", 400.0f);
+	m_trickChainMultiplier = reader.GetFloat("Multiplier", "trickMultiplier", 2.0f);
+	m_trickFinishBonus = reader.GetFloat("Score", "TrickFinish", 2000.0f);
+	m_rainbowRingBonus = reader.GetFloat("Score", "RainbowRing", 1000.0f);
 
 	// Use Unleashed goal camera (default) param
 	// CameraSp -> CameraSu (this doesn't read CameraSu, just fall back to default values)
@@ -672,8 +755,11 @@ void HudResult::Install()
 	// Record score stats (only for cosmetics if Score Generations isn't enabled)
 	INSTALL_HOOK(HudResult_MsgRestartStage);
 	INSTALL_HOOK(HudResult_LapTimeHud);
+	INSTALL_HOOK(HudResult_CSonicUpdate);
 	WRITE_JUMP(0xBDDD50, HudResult_Enemy);
 	WRITE_JUMP(0x115A941, HudResult_RainbowRing);
+	INSTALL_HOOK(HudResult_CTrickSimpleBegin);
+	INSTALL_HOOK(HudResult_CTrickSimpleAdvance);
 
 	// Patch result music
 	if (Configuration::unleashedResultMusic)
