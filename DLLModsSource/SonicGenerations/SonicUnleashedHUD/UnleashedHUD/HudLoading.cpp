@@ -638,6 +638,38 @@ HOOK(bool, __stdcall, HudLoading_CEventScene, 0xB238C0, void* a1)
 	return originalHudLoading_CEventScene(a1);
 }
 
+bool m_isMissionLoadingText = false;
+HOOK(void, __fastcall, HudLoading_ReadMissionConverseCommon, 0x6ADE20, uint32_t** This, void* Edx, int nameID, int serifuID, void* a4)
+{
+	char const* fontHeader = (char*)(This[1][2]);
+	if (serifuID <= 1 && std::strstr(fontHeader, "Mission_Cnv") != 0)
+	{
+		if ((This[1][11] - This[1][10]) >> 3 != 0)
+		{
+			m_isMissionLoadingText = true;
+
+			//uint32_t* v64 = *(uint32_t**)(This[1][10] + 8 * nameID);
+			//uint32_t* caption = *(uint32_t**)(v64[2] + 8 * serifuID);
+
+			//uint32_t const length = (caption[2] - caption[1]) / 4;
+			//uint32_t* captionList = (uint32_t*)caption[1];
+		}
+	}
+
+	originalHudLoading_ReadMissionConverseCommon(This, Edx, nameID, serifuID, a4);
+	m_isMissionLoadingText = false;
+}
+
+HOOK(void*, __fastcall, HudLoading_SetConverseCommonInfo, 0x6AFBA0, void* This, void* Edx, uint32_t* info)
+{
+	if (m_isMissionLoadingText)
+	{
+		// Force mission text to be white
+		info[3] = 0xE2FFFFFF;
+	}
+	return originalHudLoading_SetConverseCommonInfo(This, Edx, info);
+}
+
 void HudLoading::Install()
 {
 	// Load extra archives for loading screens
@@ -682,6 +714,14 @@ void HudLoading::Install()
 	INSTALL_HOOK(HudLoading_CPauseCStateWindow);
 	INSTALL_HOOK(HudLoading_CGameplayFlowStage_CStateTitle);
 	INSTALL_HOOK(HudLoading_CEventScene);
+
+	// Set mission text anchored to top left, fix color
+	WRITE_MEMORY(0x1A490C0, uint32_t, 1);
+	WRITE_MEMORY(0x1A490C8, uint32_t, 1);
+	static float s_missionTextHeight = 33.0f;
+	WRITE_MEMORY(0x449E66, float*, &s_missionTextHeight);
+	INSTALL_HOOK(HudLoading_ReadMissionConverseCommon);
+	INSTALL_HOOK(HudLoading_SetConverseCommonInfo);
 }
 
 void HudLoading::StartFadeOut()
