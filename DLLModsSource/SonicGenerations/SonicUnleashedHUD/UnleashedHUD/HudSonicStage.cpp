@@ -789,7 +789,25 @@ void HudSonicStage::Install()
 	WRITE_JUMP(0x109C1DC, GetScoreEnabled);
 
 	WRITE_STATIC_MEMORY(0x155E5D8, "ui_lockon_cursar", 16); // Used to keep the original Generations lock on cursor in the Time Eater boss battle.
-	WRITE_STATIC_MEMORY(0x168F1EC, "ui_gp_signul", 12);	    // Used to add Unleashed's Ready GO animation without breaking missions.
+	
+	// Unleashed Ready GO!
+	WRITE_MEMORY(0x109DAC8, char*, "Start_SWA");
+	WRITE_MEMORY(0x109DBB5, char*, "Intro_Anim_act");
+
+	// Unleashed mission success/fail
+	WRITE_MEMORY(0x168E124, char*, "Clear_SWA");
+	WRITE_MEMORY(0x168E130, char*, "Clear_SWA");
+	WRITE_MEMORY(0x168E13C, char*, "Failed_SWA");
+	WRITE_MEMORY(0x168E148, char*, "Failed_SWA");
+	WRITE_MEMORY(0x168E154, char*, "Failed_SWA");
+	WRITE_JUMP(0x42D661, (void*)0x42D68C);
+
+	// Unleashed game over (remove yes no confirm, force yes)
+	WRITE_MEMORY(0xCFE9FF, char*, "Game_over_SWA");
+	WRITE_MEMORY(0xCFED0E, uint32_t, 4);
+	WRITE_JUMP(0xCFEC3D, (void*)0xCFEC94);
+	WRITE_JUMP(0xCFECB4, (void*)0xCFED0B);
+	WRITE_JUMP(0xCFEDC7, (void*)0xCFE888);
 
 	WRITE_MEMORY(0xDEBCA4, uint8_t, 0xEB);
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives (patched differently to not clash with Disable Lives patch)
