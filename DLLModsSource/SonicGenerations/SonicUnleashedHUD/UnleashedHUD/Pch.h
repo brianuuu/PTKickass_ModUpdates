@@ -26,5 +26,6 @@
 #include "HudSonicStage.h"
 #include "HudResult.h"
 #include "HudLoading.h"
+#include "HudPause.h"
 #include "Patches.h"
 #include "Resources.h"

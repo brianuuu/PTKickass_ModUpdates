@@ -120,6 +120,7 @@ copy /Y "$(MSBuildProjectDirectory)\UnleashedHUD.json" "$(SolutionDir)$(Configur
     <ClInclude Include="detours\include\syelog.h" />
     <ClInclude Include="DllMain.h" />
     <ClInclude Include="HudLoading.h" />
+    <ClInclude Include="HudPause.h" />
     <ClInclude Include="HudResult.h" />
     <ClInclude Include="HudSonicStage.h" />
     <ClInclude Include="include\Common.h" />
@@ -135,6 +136,7 @@ copy /Y "$(MSBuildProjectDirectory)\UnleashedHUD.json" "$(SolutionDir)$(Configur
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="HudLoading.cpp" />
+    <ClCompile Include="HudPause.cpp" />
     <ClCompile Include="HudResult.cpp" />
     <ClCompile Include="HudSonicStage.cpp" />
     <ClCompile Include="Mod.cpp" />
