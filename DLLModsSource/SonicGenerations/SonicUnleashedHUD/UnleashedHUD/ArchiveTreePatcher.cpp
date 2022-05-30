@@ -53,14 +53,23 @@ void ArchiveTreePatcher::Install()
     {
 		case Configuration::ButtonType::XSX:
 			archiveDependencies.push_back(ArchiveDependency("XboxSeriesButtons", dependencies));
+			WRITE_STRING(0x1688344, "ui_howxb");
+			WRITE_STRING(0x16886A8, "ui_howxb");
+			WRITE_STRING(0x1692BC4, "ui_howxb");
 			break;
 
 		case Configuration::ButtonType::PS3:
 			archiveDependencies.push_back(ArchiveDependency("PlaystationButtons", dependencies));
+			WRITE_STRING(0x1688344, "ui_howps");
+			WRITE_STRING(0x16886A8, "ui_howps");
+			WRITE_STRING(0x1692BC4, "ui_howps");
 			break;
 
 		case Configuration::ButtonType::Switch:
 			archiveDependencies.push_back(ArchiveDependency("SwitchProButtons", dependencies));
+			WRITE_STRING(0x1688344, "ui_howns");
+			WRITE_STRING(0x16886A8, "ui_howns");
+			WRITE_STRING(0x1692BC4, "ui_howns");
 			break;
 
 		default:
