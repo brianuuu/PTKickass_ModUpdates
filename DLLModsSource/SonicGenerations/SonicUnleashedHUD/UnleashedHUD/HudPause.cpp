@@ -79,6 +79,8 @@ void HudPause_CreatePauseScreen(uint32_t* This)
 void HudPause_OpenPauseWindow()
 {
     m_cursorPos = 0;
+
+    if (!m_projectPause) return;
     m_scenePauseWindow->GetNode("center")->SetScale(62.0f, 0.9f);
     m_scenePauseWindow->GetNode("text_area")->SetScale(62.0f, 0.9f);
     HudPause_PlayMotion(m_scenePauseWindow, "Intro_Anim");
@@ -86,6 +88,7 @@ void HudPause_OpenPauseWindow()
 
 void HudPause_OpenPauseScreen()
 {
+    if (!m_projectPause) return;
     HudPause_PlayMotion(m_scenePauseBG, "Intro_Anim");
     HudPause_PlayMotion(m_scenePauseHeader, "Intro_Anim");
 
@@ -99,6 +102,7 @@ void HudPause_OpenPauseScreen()
 
 void HudPause_ClosePauseScreen()
 {
+    if (!m_projectPause) return;
     m_scenePauseBG->SetHideFlag(true);
     m_scenePauseHeader->SetHideFlag(true);
     m_scenePauseWindow->SetHideFlag(true);
@@ -212,4 +216,8 @@ void HudPause::Install()
 
     // Put HowTo layout to HUD_Pause
     WRITE_MEMORY(0x10AFC56, uint32_t, 0x1E66C18);
+
+    // Don't show mission objective at pause
+    WRITE_MEMORY(0xD00A46, uint8_t, 0);
+    WRITE_MEMORY(0xD07489, uint8_t, 0);
 }
