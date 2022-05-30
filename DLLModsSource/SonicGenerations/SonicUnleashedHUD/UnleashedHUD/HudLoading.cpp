@@ -582,7 +582,7 @@ void __declspec(naked) HudLoading_ExitStage()
 		sub		eax, 1
 		jz		jump
 
-		// exist stage
+		// exit stage
 		mov		m_exitingStage, 1
 		jmp		[skipAddress]
 

@@ -808,6 +808,8 @@ void HudSonicStage::Install()
 	WRITE_JUMP(0xCFEC3D, (void*)0xCFEC94);
 	WRITE_JUMP(0xCFECB4, (void*)0xCFED0B);
 	WRITE_JUMP(0xCFEDC7, (void*)0xCFE888);
+	WRITE_NOP(0xCFDF9D, 19); // Don't play Game Over music
+	WRITE_MEMORY(0xCFE6FD, uint8_t, 0xEB); // Don't play Game Over ticking sfx
 
 	WRITE_MEMORY(0xDEBCA4, uint8_t, 0xEB);
 	WRITE_MEMORY(0x109B1A4, uint8_t, 0xE9, 0xDC, 0x02, 0x00, 0x00); // Disable lives (patched differently to not clash with Disable Lives patch)
