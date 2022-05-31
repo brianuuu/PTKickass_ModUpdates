@@ -291,11 +291,8 @@ void HudPause_CreateWindowScreen(Sonic::CGameObject* gameObject)
 
 HOOK(int, __fastcall, HudPause_CWindowImplCStateOpenBegin, 0x439120, hh::fnd::CStateMachineBase::CStateBase* This)
 {
-    if (!m_sceneWindow)
-    {
-        Sonic::CGameObject* parent = (Sonic::CGameObject*)(This->GetContextBase());
-        HudPause_CreateWindowScreen(parent);
-    }
+    Sonic::CGameObject* parent = (Sonic::CGameObject*)(This->GetContextBase());
+    HudPause_CreateWindowScreen(parent);
 
     float* context = (float*)(This->GetContextBase());
     float widthMotionRatio = context[242] * 0.01f * 0.8f;
