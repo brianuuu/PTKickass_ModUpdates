@@ -313,15 +313,23 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateShowBegin, 0x4392A0, hh::fnd::CS
 
     float heightMotion = context[243];
     float yPos = (heightMotion - 48.69f) * 2.2f;
-    if (((uint32_t*)This)[12] == 3)
+    uint32_t cursorCount = ((uint32_t*)This)[12];
+    if (cursorCount == 3)
     {
         // HACK: for 3 buttons move the cursor up by one slot
         yPos -= 50.0f;
     }
-    m_sceneWindowSelect->SetPosition(0.0f, yPos);
 
-    HudPause_StopMotion(m_sceneWindowSelect, "Scroll_Anim", 0.0f);
-    HudPause_PlayMotion(m_sceneWindowSelect, "Usual_Anim", true);
+    if (cursorCount == 0)
+    {
+        m_sceneWindowSelect->SetHideFlag(true);
+    }
+    else
+    {
+        m_sceneWindowSelect->SetPosition(0.0f, yPos);
+        HudPause_StopMotion(m_sceneWindowSelect, "Scroll_Anim", 0.0f);
+        HudPause_PlayMotion(m_sceneWindowSelect, "Usual_Anim", true);
+    }
     return result;
 }
 
