@@ -28,6 +28,7 @@ float speed;
 size_t actionCount;
 hh::math::CVector2 infoCustomPos;
 bool HudSonicStage::scoreEnabled;
+int lostRingCount;
 
 float HudSonicStage::xAspectOffset = 0.0f;
 float HudSonicStage::yAspectOffset = 0.0f;
@@ -304,6 +305,9 @@ HOOK(void, __fastcall, ProcMsgChangeCustomHud, 0x1096FF0, Sonic::CGameObject* Th
 
 HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObject* This)
 {
+	std::srand(static_cast<unsigned int>(std::time(nullptr)));
+	lostRingCount = 0;
+
 	HudSonicStage::scoreEnabled = false;
 	originalCHudSonicStageDelayProcessImp(This);
 	CHudSonicStageRemoveCallback(This, nullptr, nullptr);
@@ -458,6 +462,70 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	CreateScreen(This);
 }
+
+class CObjDropRing : public Sonic::CGameObject
+{
+	hh::math::CVector m_Position;
+	hh::math::CVector2 m_2DPosition;
+	hh::math::CVector2 m_2DVelocity;
+	hh::math::CVector4 m_ScreenPosition;
+	float m_LifeTime{};
+	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
+
+public:
+	CObjDropRing() {}
+
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder, Sonic::CGameDocument* pGameDocument,
+		const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase) override
+	{
+		Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+		pGameDocument->AddUpdateUnit("f", this);
+
+		m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("cmn_obj_ring_HD"));
+		AddRenderable("HUD_B2", m_spModel, false);
+
+		const auto spCamera = pGameDocument->GetWorld()->GetCamera();
+		const auto viewPosition = spCamera->m_MyCamera.m_View * Eigen::Vector3f(m_Position);
+
+		m_ScreenPosition = spCamera->m_MyCamera.m_Projection * hh::math::CVector4(viewPosition.x(), viewPosition.y(), viewPosition.z(), 1.0f);
+		m_ScreenPosition /= m_ScreenPosition.w();
+
+		constexpr float speed = 4.2f;
+		float angle = ((float)std::rand() / RAND_MAX) * PI;
+		float width = (float)*(size_t*)0x1DFDDDC;
+		float height = (float)*(size_t*)0x1DFDDE0;
+		m_2DVelocity = hh::math::CVector2(std::cosf(angle) / width * height, std::sinf(angle)) * speed;
+
+		m_2DPosition = hh::math::CVector2(-0.7765625f, -0.7833333333333333f);
+		m_LifeTime = 0.0f;
+	}
+
+	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& updateInfo) override
+	{
+		const auto spCamera = m_pMember->m_pGameDocument->GetWorld()->GetCamera();
+
+		const hh::math::CVector4 ringDepth = spCamera->m_MyCamera.m_Projection * hh::math::CVector4(0, 0, -10.0f, 1.0f);
+
+		constexpr float gravity = -9.81f;
+		Hedgehog::Math::CVector2 const velPrev = m_2DVelocity;
+		m_2DVelocity += Hedgehog::Math::CVector2::UnitY() * gravity * updateInfo.DeltaTime;
+		Hedgehog::Math::CVector const posPrev = m_Position;
+		m_2DPosition += (velPrev + m_2DVelocity) * 0.5f * updateInfo.DeltaTime;
+
+		const hh::math::CVector4 viewPosInProj = spCamera->m_MyCamera.m_Projection.inverse() *
+			(hh::math::CVector4(m_2DPosition.x(), m_2DPosition.y(), ringDepth.z() / ringDepth.w(), 1.0f));
+
+		const hh::math::CVector viewPosition = viewPosInProj.head<3>() / viewPosInProj.w();
+
+		m_spModel->m_spInstanceInfo->m_Transform = spCamera->m_MyCamera.m_View.inverse() * (Eigen::Translation3f(viewPosition) * hh::math::CQuaternion::Identity());
+
+		m_LifeTime += updateInfo.DeltaTime;
+		if (m_LifeTime > 2.0f)
+		{
+			SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		}
+	}
+};
 
 HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObject* This, void* Edx, const hh::fnd::SUpdateInfo& in_rUpdateInfo)
 {
@@ -692,6 +760,13 @@ HOOK(void, __fastcall, CHudSonicStageUpdateParallel, 0x1098A50, Sonic::CGameObje
 	// Hide pin_score
 	if (const auto rcPinScore = *(Chao::CSD::RCPtr<Chao::CSD::CScene>*)((char*)This + 0x128))
 		rcPinScore->SetHideFlag(true);
+
+	// Handle lost rings
+	if (lostRingCount > 0)
+	{
+		lostRingCount--;
+		This->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjDropRing>());
+	}
 }
 
 class CObjGetItem : public Sonic::CGameObject
@@ -853,6 +928,38 @@ HOOK(void, __stdcall, CPlayerGetLife, 0xE75520, Sonic::Player::CPlayerContext* c
 	}
 }
 
+HOOK(int, __fastcall, CDroppedRingImplCreateRing, 0x1054FF0, void* This, void* Edx, int a2, int a3, int a4)
+{
+	if (*pClassicSonicContext)
+	{
+		return originalCDroppedRingImplCreateRing(This, Edx, a2, a3, a4);
+	}
+
+	return 0;
+}
+
+HOOK(void, __fastcall, ProcMsgDamageModern, 0xE27890, uint32_t* This, void* Edx, void* message)
+{
+	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+	int ringCountPrev = context->m_RingCount;
+	bool wasDamaged = context->StateFlag(eStateFlag_NoDamage) > 0;
+	originalProcMsgDamageModern(This, Edx, message);
+
+	if (!wasDamaged)
+	{
+		int ringCountDiff = ringCountPrev - context->m_RingCount;
+		if (ringCountDiff == 0)
+		{
+			// if ring count is the same then you're probably using infinite ring cheat
+			lostRingCount = 50;
+		}
+		else
+		{
+			lostRingCount = max(0, min(50, ringCountDiff));
+		}
+	}
+}
+
 void HudSonicStage::Install()
 {
 	INSTALL_HOOK(ProcMsgGetMissionLimitTime);
@@ -907,6 +1014,11 @@ void HudSonicStage::Install()
 	WRITE_JUMP(0xE7555F, (void*)0xE7565F);
 	INSTALL_HOOK(CPlayerGetLife);
 	WRITE_STRING(0x15E90DC, "");
+
+	// Unleashed Drop Ring HUD
+	INSTALL_HOOK(CDroppedRingImplCreateRing);
+	INSTALL_HOOK(ProcMsgDamageModern);
+
 }
 
 void HudSonicStage::CalculateAspectOffsets()
