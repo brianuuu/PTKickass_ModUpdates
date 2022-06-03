@@ -945,15 +945,10 @@ HOOK(void, __fastcall, ProcMsgDamageModern, 0xE27890, uint32_t* This, void* Edx,
 	bool wasDamaged = context->StateFlag(eStateFlag_NoDamage) > 0;
 	originalProcMsgDamageModern(This, Edx, message);
 
-	if (!wasDamaged)
+	if (!wasDamaged && ringCountPrev > 0)
 	{
 		int ringCountDiff = ringCountPrev - context->m_RingCount;
-		if (ringCountDiff == 0)
-		{
-			// if ring count is the same then you're probably using infinite ring cheat
-			lostRingCount = 50;
-		}
-		else
+		if (ringCountDiff > 0)
 		{
 			lostRingCount = max(0, min(50, ringCountDiff));
 		}
