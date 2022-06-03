@@ -752,6 +752,73 @@ public:
 	}
 };
 
+class CObjGetLife : public Sonic::CGameObject
+{
+	hh::math::CVector m_Position;
+	hh::math::CVector4 m_ScreenPosition;
+	hh::math::CQuaternion m_Rotation;
+	float m_Factor{};
+	float m_LifeTime{};
+	boost::shared_ptr<hh::mr::CSingleElement> m_spModel;
+
+public:
+	CObjGetLife() {}
+
+	void AddCallback(const Hedgehog::Base::THolder<Sonic::CWorld>& worldHolder, Sonic::CGameDocument* pGameDocument,
+		const boost::shared_ptr<Hedgehog::Database::CDatabase>& spDatabase) override
+	{
+		Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
+		pGameDocument->AddUpdateUnit("f", this);
+
+		m_Position = hh::math::CVector::Zero();
+		auto* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
+		if (context)
+		{
+			m_Position = context->m_spMatrixNode->m_Transform.m_Position;
+		}
+
+		m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("cmn_obj_oneup_HUD"));
+		AddRenderable("HUD_B2", m_spModel, false);
+
+		const auto spCamera = pGameDocument->GetWorld()->GetCamera();
+		const auto viewPosition = spCamera->m_MyCamera.m_View * Eigen::Vector3f(m_Position);
+
+		m_ScreenPosition = spCamera->m_MyCamera.m_Projection * hh::math::CVector4(viewPosition.x(), viewPosition.y(), viewPosition.z(), 1.0f);
+		m_ScreenPosition /= m_ScreenPosition.w();
+
+		m_Rotation = hh::math::CQuaternion(0, 0, 1, 0);
+		m_LifeTime = 0.0f;
+	}
+
+	void UpdateParallel(const Hedgehog::Universe::SUpdateInfo& updateInfo) override
+	{
+		const auto spCamera = m_pMember->m_pGameDocument->GetWorld()->GetCamera();
+		
+		// HACK: fake linear scaling with FOV (FOV 45 = -7.614, FOV 60 = -5.42)
+		constexpr float slope = (-5.42f + 7.614f) / 15.0f;
+		float depth = slope * (spCamera->m_FieldOfView * 180.0f / PI - 45.0f) - 7.614f;
+		const hh::math::CVector4 ringDepth = spCamera->m_MyCamera.m_Projection * hh::math::CVector4(0, 0, depth, 1.0f);
+
+		const hh::math::CVector4 viewPosInProj = spCamera->m_MyCamera.m_Projection.inverse() *
+			((1.0f - m_Factor) * m_ScreenPosition + m_Factor * hh::math::CVector4(0.0f, 0.6018518518518519f, ringDepth.z() / ringDepth.w(), 1.0f));
+
+		const hh::math::CVector viewPosition = viewPosInProj.head<3>() / viewPosInProj.w();
+
+		m_spModel->m_spInstanceInfo->m_Transform = spCamera->m_MyCamera.m_View.inverse() * (Eigen::Translation3f(viewPosition) * m_Rotation);
+		m_Rotation = m_Rotation.slerp(updateInfo.DeltaTime * 3.0f, hh::math::CQuaternion::Identity());
+
+		m_LifeTime += updateInfo.DeltaTime;
+		m_Factor += updateInfo.DeltaTime * 0.125f;
+		m_Factor *= 1.06f;
+		m_Factor = min(1.0f, m_Factor);
+
+		if (m_LifeTime > 2.0f)
+		{
+			SendMessage(m_ActorID, boost::make_shared<Sonic::Message::MsgKill>());
+		}
+	}
+};
+
 HOOK(void, __fastcall, CObjRingProcMsgHitEventCollision, 0x10534B0, Sonic::CGameObject3D* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
 	auto const* context = Sonic::Player::CPlayerSpeedContext::GetInstance();
@@ -770,6 +837,20 @@ HOOK(int, __fastcall, ProcMsgRestartStage, 0xE76810, uint32_t* This, void* Edx, 
 		Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcSpeedCount);
 
 	return originalProcMsgRestartStage(This, Edx, message);
+}
+
+HOOK(void, __stdcall, CPlayerGetLife, 0xE75520, Sonic::Player::CPlayerContext* context, int lifeCount, bool playSound)
+{
+	originalCPlayerGetLife(context, lifeCount, playSound);
+
+	if (lifeCount > 0)
+	{
+		context->m_pPlayer->m_pMember->m_pGameDocument->AddGameObject(boost::make_shared<CObjGetLife>());
+		if (playSound)
+		{
+			context->PlaySound(4001009, 0);
+		}
+	}
 }
 
 void HudSonicStage::Install()
@@ -821,6 +902,11 @@ void HudSonicStage::Install()
 	// WRITE_MEMORY(0x109BEF0, uint8_t, 0x90, 0xE9); // Disable mission countdown
 	WRITE_MEMORY(0x109C3E2, uint8_t, 0x90, 0xE9); // Disable mission rank
 	WRITE_MEMORY(0x16A467C, void*, CHudSonicStageRemoveCallback);
+
+	// Unleashed 1up HUD object
+	WRITE_JUMP(0xE7555F, (void*)0xE7565F);
+	INSTALL_HOOK(CPlayerGetLife);
+	WRITE_STRING(0x15E90DC, "");
 }
 
 void HudSonicStage::CalculateAspectOffsets()
