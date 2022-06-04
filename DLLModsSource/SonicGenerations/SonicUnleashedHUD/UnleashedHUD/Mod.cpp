@@ -1,4 +1,3 @@
-#include "HudTitle.h"
 bool isScoreGenLowerPriority = false;
 extern "C" __declspec(dllexport) void Init(const char* path)
 {
@@ -17,8 +16,8 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 	HudResult::Install(); // Must be hooked after HudSonicStage to get checkpoint speed data
 	HudLoading::Install();
 	HudPause::Install();
-	Patches::Install();
 	HudTitle::Install();
+	Patches::Install();
 }
 
 extern "C" __declspec(dllexport) void PostInit()
