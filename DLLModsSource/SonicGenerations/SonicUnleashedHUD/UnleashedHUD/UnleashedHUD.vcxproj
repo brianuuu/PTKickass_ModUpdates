@@ -21,13 +21,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -123,6 +123,7 @@ copy /Y "$(MSBuildProjectDirectory)\UnleashedHUD.json" "$(SolutionDir)$(Configur
     <ClInclude Include="HudPause.h" />
     <ClInclude Include="HudResult.h" />
     <ClInclude Include="HudSonicStage.h" />
+    <ClInclude Include="HudTitle.h" />
     <ClInclude Include="include\Common.h" />
     <ClInclude Include="include\Helpers.h" />
     <ClInclude Include="include\INIReader.h" />
@@ -139,6 +140,7 @@ copy /Y "$(MSBuildProjectDirectory)\UnleashedHUD.json" "$(SolutionDir)$(Configur
     <ClCompile Include="HudPause.cpp" />
     <ClCompile Include="HudResult.cpp" />
     <ClCompile Include="HudSonicStage.cpp" />
+    <ClCompile Include="HudTitle.cpp" />
     <ClCompile Include="Mod.cpp" />
     <ClCompile Include="Patches.cpp" />
     <ClCompile Include="Pch.cpp">

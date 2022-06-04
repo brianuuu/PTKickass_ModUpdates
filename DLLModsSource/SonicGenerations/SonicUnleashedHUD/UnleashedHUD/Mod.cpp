@@ -1,4 +1,4 @@
-
+#include "HudTitle.h"
 bool isScoreGenLowerPriority = false;
 extern "C" __declspec(dllexport) void Init(const char* path)
 {
@@ -18,6 +18,7 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 	HudLoading::Install();
 	HudPause::Install();
 	Patches::Install();
+	HudTitle::Install();
 }
 
 extern "C" __declspec(dllexport) void PostInit()
