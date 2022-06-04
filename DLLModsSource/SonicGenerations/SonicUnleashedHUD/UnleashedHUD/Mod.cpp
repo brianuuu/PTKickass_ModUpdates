@@ -16,7 +16,7 @@ extern "C" __declspec(dllexport) void Init(const char* path)
 	HudResult::Install(); // Must be hooked after HudSonicStage to get checkpoint speed data
 	HudLoading::Install();
 	HudPause::Install();
-	HudTitle::Install();
+	Title::Install();
 	Patches::Install();
 }
 

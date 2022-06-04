@@ -1,6 +1,6 @@
 #pragma once
 
-class HudTitle
+class Title
 {
 public:
 	static void Install();

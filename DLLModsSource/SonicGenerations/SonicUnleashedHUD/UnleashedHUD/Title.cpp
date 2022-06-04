@@ -3,13 +3,13 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcTitleLogo_1, rcTitlebg, rcTitleMenu, rcTit
 boost::shared_ptr<Sonic::CGameObjectCSD> spTitleScreen;
 int currentTitleIndex = 0;
 
-void HudTitle::CreateScreen(Sonic::CGameObject* pParentGameObject)
+void Title::CreateScreen(Sonic::CGameObject* pParentGameObject)
 {
 	if (rcTitleScreen && !spTitleScreen)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spTitleScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcTitleScreen, 0.5f, "HUD", false), "main", pParentGameObject);
 }
 
-void HudTitle::KillScreen()
+void Title::KillScreen()
 {
 	if (spTitleScreen)
 	{
@@ -18,7 +18,7 @@ void HudTitle::KillScreen()
 	}
 }
 
-void HudTitle::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
+void Title::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameObject)
 {
 	if (visible)
 		CreateScreen(pParentGameObject);
@@ -26,14 +26,14 @@ void HudTitle::ToggleScreen(const bool visible, Sonic::CGameObject* pParentGameO
 		KillScreen();
 }
 
-void HudTitle::FreezeMotion(Chao::CSD::CScene* pScene)
+void Title::FreezeMotion(Chao::CSD::CScene* pScene)
 {
 	pScene->SetMotionFrame(pScene->m_MotionEndFrame);
 	pScene->m_MotionSpeed = 0.0f;
 	pScene->m_MotionRepeatType = Chao::CSD::eMotionRepeatType_PlayOnce;
 }
 
-void HudTitle::PlayAnimation(Chao::CSD::CScene* pScene, const char* name, Chao::CSD::EMotionRepeatType repeatType, float motionSpeed, float startFrame)
+void Title::PlayAnimation(Chao::CSD::CScene* pScene, const char* name, Chao::CSD::EMotionRepeatType repeatType, float motionSpeed, float startFrame)
 {
 	pScene->SetMotion(name);
 	pScene->m_MotionRepeatType = repeatType;
@@ -43,7 +43,7 @@ void HudTitle::PlayAnimation(Chao::CSD::CScene* pScene, const char* name, Chao::
 	pScene->Update(0);
 }
 
-void HudTitle::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
+void Title::IntroAnim(Chao::CSD::RCPtr<Chao::CSD::CScene> scene)
 {
 	scene->SetMotion("Intro_Anim");
 	scene->SetMotionFrame(0.0f);
@@ -56,9 +56,9 @@ void UnleashedTitleText()
 {
 	rcTitleMenuTXT->SetPosition(0, 0);
 
-	if (currentTitleIndex < 0)
+	if (currentTitleIndex < 0) 
 		currentTitleIndex = 4;
-	else if(currentTitleIndex > 4)
+	else if (currentTitleIndex > 4)
 		currentTitleIndex = 0;
 
 	rcTitleMenuTXT->GetNode("txt_0")->SetHideFlag(!(currentTitleIndex == 0));
@@ -70,7 +70,7 @@ void UnleashedTitleText()
 	printf("\nCURRENT INDEX: %d", currentTitleIndex);
 #endif
 
-	HudTitle::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitleMenuTXT, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 }
 
 HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Edx, int a2, int a3, void** a4)
@@ -89,28 +89,28 @@ HOOK(int, __fastcall, CTitleMain, 0x0056FBE0, Sonic::CGameObject* This, void* Ed
 	rcTitleMenu = rcTitleScreen->CreateScene("menu");
 	rcTitleMenuScroll = rcTitleScreen->CreateScene("menu_scroll");
 	rcTitleMenuTXT = rcTitleScreen->CreateScene("txt");
-	HudTitle::FreezeMotion(*rcTitleMenuTXT);
+	Title::FreezeMotion(*rcTitleMenuTXT);
 	rcTitleMenuTXT->GetNode("txt_4")->SetHideFlag(true);
-	HudTitle::FreezeMotion(*rcTitleMenuScroll);
-	HudTitle::FreezeMotion(*rcTitleMenu);
-	HudTitle::FreezeMotion(*rcTitlebg);
-	HudTitle::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	HudTitle::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::FreezeMotion(*rcTitleMenuScroll);
+	Title::FreezeMotion(*rcTitleMenu);
+	Title::FreezeMotion(*rcTitlebg);
+	Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	rcTitleMenuScroll->SetPosition(0, 650000);
 	rcTitleMenuTXT->SetPosition(0, 650000);
-	HudTitle::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
-	HudTitle::FreezeMotion(*rcTitleMenuScroll);
-	HudTitle::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	HudTitle::CreateScreen(This);
+	Title::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
+	Title::FreezeMotion(*rcTitleMenuScroll);
+	Title::PlayAnimation(*rcTitleLogo_1, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::CreateScreen(This);
 
 	return 0;
 }
 
 HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 {
-	HudTitle::FreezeMotion(*rcTitleMenu);
-	HudTitle::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	HudTitle::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::FreezeMotion(*rcTitleMenu);
+	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 	rcTitleMenuTXT->SetPosition(0, 0);
 	UnleashedTitleText();
 	rcTitleMenuScroll->SetPosition(0, 0);
@@ -120,9 +120,9 @@ HOOK(int, __fastcall, CTitleMainSelect, 0x11D1210, int a1)
 
 HOOK(int, __fastcall, CTitleMainWait, 0x11D1410, int a1)
 {
-	HudTitle::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	HudTitle::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
-	HudTitle::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
+	Title::PlayAnimation(*rcTitleMenu, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitlebg, "Intro_Anim_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+	Title::PlayAnimation(*rcTitleMenuScroll, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 0, 0);
 	rcTitleMenuTXT->SetPosition(0, 65000);
 	rcTitleMenuScroll->SetPosition(0, 65000);
 	return originalCTitleMainWait(a1);
@@ -136,21 +136,21 @@ HOOK(int, __fastcall, CTitleMainFinish, 0x5727F0, Sonic::CGameObject* This)
 	if (inputPtr->LeftStickVertical >= 0.5f)
 	{
 		currentTitleIndex -= 1;
-		HudTitle::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_2", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		UnleashedTitleText();
 	}
 
 	if (inputPtr->LeftStickVertical < -0.5f)
 	{
 		currentTitleIndex += 1;
-		HudTitle::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
+		Title::PlayAnimation(*rcTitleMenu, "Scroll_Anim_2_1", Chao::CSD::eMotionRepeatType_PlayOnce, 1, 0);
 		UnleashedTitleText();
 	}
 
 	return 0;
 }
 
-void HudTitle::Install()
+void Title::Install()
 {
 	INSTALL_HOOK(CTitleMain);
 	INSTALL_HOOK(CTitleMainFinish);
