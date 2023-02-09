@@ -801,3 +801,23 @@ void HudResult::GetModelType()
 		}
 	}
 }
+
+void HudResult::AddRingScore(int score)
+{
+	m_stageData.m_ringScore += score;
+}
+
+void HudResult::AddSpeedScore(int score)
+{
+	m_stageData.m_speedScore += score;
+}
+
+void HudResult::AddEnemyScore(int score)
+{
+	m_stageData.m_enemyScore += score;
+}
+
+void HudResult::AddTrickScore(int score)
+{
+	m_stageData.m_trickScore += score;
+}

@@ -98,6 +98,9 @@
     <ClCompile Include="HudPause.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="APIExport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="detours\lib\x64\syelog.lib" />

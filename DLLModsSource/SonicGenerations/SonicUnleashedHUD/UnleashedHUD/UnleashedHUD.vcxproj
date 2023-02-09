@@ -132,6 +132,7 @@ copy /Y "$(MSBuildProjectDirectory)\UnleashedHUD.json" "$(SolutionDir)$(Configur
     <ClInclude Include="Resources.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="APIExport.cpp" />
     <ClCompile Include="ArchiveTreePatcher.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DllMain.cpp" />

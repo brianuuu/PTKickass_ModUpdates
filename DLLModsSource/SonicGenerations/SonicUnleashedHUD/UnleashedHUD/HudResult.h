@@ -86,5 +86,11 @@ public:
 
 	static void Install();
 	static void GetModelType();
+
+	// API
+	static void AddRingScore(int score);
+	static void AddSpeedScore(int score);
+	static void AddEnemyScore(int score);
+	static void AddTrickScore(int score);
 };
 
