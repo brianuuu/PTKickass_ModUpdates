@@ -678,13 +678,13 @@ HOOK(void*, __fastcall, HudLoading_SetConverseCommonInfo, 0x6AFBA0, void* This, 
 void HudLoading::Install()
 {
 	// Load extra archives for loading screens
-	if (Common::IsModNameEnabled("Unleashed Project"))
-	{
-		m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_UP;
-	}
-	else if (Common::DoesArchiveExist("LoadingCustom.ar.00"))
+	if (Common::DoesArchiveExist("LoadingCustom.ar.00"))
 	{
 		m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_Custom;
+	}
+	else if (Common::IsModNameEnabled("Unleashed Project"))
+	{
+		m_loadingArchiveType = HudLoading::LoadingArchiveType::LAT_UP;
 	}
 	WRITE_JUMP(0xD6A35D, HudLoading_ExtraLoadingARL);
 	WRITE_JUMP(0xD6A455, HudLoading_ExtraLoadingAR);
