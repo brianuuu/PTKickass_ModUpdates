@@ -6,6 +6,7 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseBG;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseHeader;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseWindow;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseSelect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_scenePauseFooter;
 uint32_t m_cursorPos = 0;
 
 void HudPause_PlayMotion(Chao::CSD::RCPtr<Chao::CSD::CScene>& scene, char const* motion, bool loop = false, float start = 0.0f, float end = -1.0f)
@@ -48,6 +49,7 @@ void __fastcall HudPause_CPauseRemoveCallback(Sonic::CGameObject* This, void*, S
     Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseHeader);
     Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseWindow);
     Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseSelect);
+    Chao::CSD::CProject::DestroyScene(m_projectPause.Get(), m_scenePauseFooter);
 
     m_projectPause = nullptr;
 }
@@ -71,6 +73,8 @@ void HudPause_CreatePauseScreen(uint32_t* This)
     m_scenePauseWindow->SetHideFlag(true);
     m_scenePauseSelect = m_projectPause->CreateScene("bg_1_select");
     m_scenePauseSelect->SetHideFlag(true);
+    m_scenePauseFooter = m_projectPause->CreateScene("footer_A");
+    m_scenePauseFooter->SetHideFlag(true);
 
     if (m_projectPause && !m_spPause)
     {
@@ -111,6 +115,7 @@ void HudPause_ClosePauseScreen()
     m_scenePauseHeader->SetHideFlag(true);
     m_scenePauseWindow->SetHideFlag(true);
     m_scenePauseSelect->SetHideFlag(true);
+    m_scenePauseFooter->SetHideFlag(true);
 }
 
 void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
@@ -140,6 +145,7 @@ void HudPause_PauseCase(uint32_t* This, int Case, bool isPam)
             originalScene->SetMotionFrame(originalScene->m_MotionEndFrame);
         }
         m_scenePauseSelect->SetHideFlag(false);
+        m_scenePauseFooter->SetHideFlag(false);
         break;
     }
     case 3: // New cursor pos
@@ -224,6 +230,7 @@ HOOK(void, __fastcall, HudPause_CPauseCStateCloseBegin, 0x42A710, hh::fnd::CStat
         {
             m_scenePauseWindow->SetHideFlag(true);
             m_scenePauseSelect->SetHideFlag(true);
+            m_scenePauseFooter->SetHideFlag(true);
         }
     }
 
@@ -258,6 +265,7 @@ Chao::CSD::RCPtr<Chao::CSD::CProject> m_projectWindow;
 boost::shared_ptr<Sonic::CGameObjectCSD> m_spWindow;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneWindow;
 Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneWindowSelect;
+Chao::CSD::RCPtr<Chao::CSD::CScene> m_sceneWindowFooter;
 
 void __fastcall HudPause_CWindowImplRemoveCallback(Sonic::CGameObject* This, void*, Sonic::CGameDocument* pGameDocument)
 {
@@ -269,6 +277,7 @@ void __fastcall HudPause_CWindowImplRemoveCallback(Sonic::CGameObject* This, voi
 
     Chao::CSD::CProject::DestroyScene(m_projectWindow.Get(), m_sceneWindow);
     Chao::CSD::CProject::DestroyScene(m_projectWindow.Get(), m_sceneWindowSelect);
+    Chao::CSD::CProject::DestroyScene(m_projectWindow.Get(), m_sceneWindowFooter);
 
     m_projectWindow = nullptr;
 }
@@ -287,6 +296,9 @@ void HudPause_CreateWindowScreen(Sonic::CGameObject* gameObject)
     m_sceneWindow->SetHideFlag(true);
     m_sceneWindowSelect = m_projectWindow->CreateScene("window_select");
     m_sceneWindowSelect->SetHideFlag(true);
+    m_sceneWindowFooter = m_projectWindow->CreateScene("footer");
+    m_sceneWindowFooter->GetNode("cancel")->SetPatternIndex(1);
+    m_sceneWindowFooter->SetHideFlag(true);
 
     if (m_projectWindow && !m_spWindow)
     {
@@ -329,12 +341,14 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateShowBegin, 0x4392A0, hh::fnd::CS
     if (cursorCount == 0)
     {
         m_sceneWindowSelect->SetHideFlag(true);
+        HudPause_StopMotion(m_sceneWindowFooter, "Usual_Anim_3", 0.0f);
     }
     else
     {
         m_sceneWindowSelect->SetPosition(HudSonicStage::xAspectOffset / 2, HudSonicStage::yAspectOffset / 2 + yPos);
         HudPause_StopMotion(m_sceneWindowSelect, "Scroll_Anim", 0.0f);
         HudPause_PlayMotion(m_sceneWindowSelect, "Usual_Anim", true);
+        HudPause_StopMotion(m_sceneWindowFooter, "Usual_Anim_12", 0.0f);
     }
 
     // Initial cursor pos
@@ -384,6 +398,7 @@ HOOK(int, __fastcall, HudPause_CWindowImplCStateCloseBegin, 0x4395A0, hh::fnd::C
 {
     m_sceneWindow->SetHideFlag(true);
     m_sceneWindowSelect->SetHideFlag(true);
+    m_sceneWindowFooter->SetHideFlag(true);
     return originalHudPause_CWindowImplCStateCloseBegin(This);
 }
 
