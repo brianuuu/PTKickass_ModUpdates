@@ -20,6 +20,7 @@
 #include "include\INIReader.h"
 #include "include\ScoreGenerationsAPI\ScoreGenerationsAPI.h"
 #include "include\Common.h"
+#include "include\ModLoader.h"
 #include "ArchiveTreePatcher.h"
 #include "Configuration.h"
 #include "DllMain.h"

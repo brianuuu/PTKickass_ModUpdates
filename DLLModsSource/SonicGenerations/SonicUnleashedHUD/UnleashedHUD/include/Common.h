@@ -996,6 +996,29 @@ namespace Common
 		}
 	}
 
+	inline bool IsModEnabled(std::string const& section, std::string const& name, std::string const& str, std::string* o_iniPath = nullptr)
+	{
+		std::vector<std::string> modIniList;
+		GetModIniList(modIniList);
+		for (size_t i = 0; i < modIniList.size(); i++)
+		{
+			std::string const& config = modIniList[i];
+			INIReader configReader(config);
+			std::string value = configReader.Get(section, name, "");
+			if (value == str)
+			{
+				if (o_iniPath)
+				{
+					*o_iniPath = config;
+				}
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	inline bool IsModIdEnabled(std::string const& id, std::string* o_iniPath = nullptr)
 	{
 		std::vector<std::string> modIniList;
@@ -1042,6 +1065,40 @@ namespace Common
 		}
 
 		return false;
+	}
+
+	inline bool GetModIDFromDLL(std::string const& name, std::string& o_modID)
+	{
+		bool found = false;
+		o_modID.clear();
+
+		std::vector<std::string> modIniList;
+		GetModIniList(modIniList);
+		for (size_t i = 0; i < modIniList.size(); i++)
+		{
+			std::string const& config = modIniList[i];
+			INIReader configReader(config);
+			std::string value = configReader.Get("Main", "DLLFile", "");
+			if (value == name)
+			{
+				if (found)
+				{
+					MessageBox(nullptr, TEXT("There are multiple mods with the same .dll"), TEXT("ERROR"), MB_ICONERROR);
+					exit(-1);
+				}
+
+				found = true;
+				o_modID = configReader.Get("Main", "ID", "");
+
+				if (o_modID.empty())
+				{
+					MessageBox(nullptr, TEXT("One of the mods has no valid ID"), TEXT("ERROR"), MB_ICONERROR);
+					exit(-1);
+				}
+			}
+		}
+
+		return found;
 	}
 
 	inline bool DoesArchiveExist(std::string const& archiveName)
