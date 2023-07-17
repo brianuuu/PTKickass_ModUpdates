@@ -53,9 +53,9 @@ char const* m_loadingArchiveNames[] =
 char const* m_loadingButtonArchiveNames[] =
 {
 	"LoadingXBOX.ar",
-	"LoadingXBOX.ar",
+	"LoadingSeries.ar",
 	"LoadingPS.ar",
-	"LoadingXBOX.ar",
+	"LoadingSwitch.ar",
 };
 
 void __fastcall HudLoading_ExtraLoadingARLImpl(int a1)
