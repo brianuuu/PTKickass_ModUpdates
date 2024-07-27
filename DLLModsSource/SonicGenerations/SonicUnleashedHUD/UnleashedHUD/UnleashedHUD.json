@@ -2,7 +2,7 @@
   "Groups": [
     {
       "Name": "Appearance",
-      "DisplayName": "Appearance",
+      "DisplayName": "Window Appearance",
       "Elements": [
         {
           "Name": "windowTitle",
@@ -36,23 +36,12 @@
           "MinValue": null,
           "MaxValue": null,
           "DefaultValue": 0
-        },
-        {
-          "Name": "buttonType",
-          "Description": [
-            "Select the type of button prompts to show in the game."
-          ],
-          "DisplayName": "Button Prompts",
-          "Type": "ButtonEnum",
-          "MinValue": null,
-          "MaxValue": null,
-          "DefaultValue": 0
         }
       ]
     },
 	{
       "Name": "Music",
-      "DisplayName": "Music",
+      "DisplayName": "Music Settings",
       "Elements": [
         {
           "Name": "resultMusic",
@@ -65,6 +54,68 @@
           "MaxValue": null,
           "DefaultValue": true
         }
+      ]
+    },
+	{
+      "Name": "HUD",
+      "DisplayName": "HUD Settings",
+      "Elements": [
+        {
+          "Name": "buttonType",
+          "Description": [
+            "Select the type of button prompts to show in the game."
+          ],
+          "DisplayName": "Button Prompts",
+          "Type": "ButtonEnum",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": 0
+        },
+		{
+			"Name":"uiType",
+			"DisplayName":"UI Type",
+			"Description":
+			[
+				"Select the style of UI",
+			],
+			"Type":"SonicType",
+			"MinValue":null,
+			"MaxValue":null,
+			"DefaultValue":"0"
+		},
+		{
+          "Name": "checkpointSpeed",
+          "Description": [
+            "Enable this to show speed after hitting a checkpoint"
+          ],
+          "DisplayName": "Checkpoint Speed",
+          "Type": "bool",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": true
+        },
+		{
+          "Name": "showTime",
+          "Description": [
+            "Enable this to show current time on a stage"
+          ],
+          "DisplayName": "Show Time",
+          "Type": "bool",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": true
+        },
+		{
+          "Name": "showBoost",
+          "Description": [
+            "Enable this to show boost gauge HUD"
+          ],
+          "DisplayName": "Show Boost Gauge",
+          "Type": "bool",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": true
+        },
       ]
     }
   ],
@@ -137,7 +188,26 @@
           "Use Switch button prompts."
         ]
       }
-    ]
+    ],
+	"SonicType": 
+	[
+		{
+			"DisplayName": "Sonic the Hedgehog",
+			"Value": "0",
+			"Description": 
+			[
+				"Sonic the Hedgehog",
+			]
+		},
+		{
+			"DisplayName": "Sonic the Werehog",
+			"Value": "1",
+			"Description": 
+			[
+				"Sonic the Werehog",
+			]
+		},
+	]
   },
   "IniFile": "UnleashedHUD.ini"
 }
