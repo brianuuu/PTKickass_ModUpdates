@@ -1,4 +1,6 @@
 #include "HudSonicStage.h"
+#include "Configuration.h"
+
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcPlayScreen;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcPlayerCount;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcTimeCount;
@@ -19,6 +21,9 @@ boost::shared_ptr<Sonic::CGameObjectCSD> spMissionScreen;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcPlayScreenEv;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcRingGet;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcScoreCountEv;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcRingCountEv;
+Chao::CSD::RCPtr<Chao::CSD::CScene> rcRingCountEv2;
 boost::shared_ptr<Sonic::CGameObjectCSD> spPlayScreenEv;
 
 Chao::CSD::RCPtr<Chao::CSD::CProject> rcBossScreen;
@@ -54,10 +59,10 @@ void CreateScreen(Sonic::CGameObject* pParentGameObject)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spPlayScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcPlayScreen, 0.5f, "HUD_B1", false), "main", pParentGameObject);
 
 	if (rcMissionScreen && !spMissionScreen)
-		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spMissionScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcMissionScreen, 0.5f, "HUD_B1", false), "main", pParentGameObject);
+		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spMissionScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcMissionScreen, 0.5f, Configuration::uiType == Configuration::SonicType::Hedgehog ? "HUD_B1" : "HUD_B2", false), "main", pParentGameObject);
 
 	if (rcPlayScreenEv && !spPlayScreenEv)
-		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spPlayScreenEv = boost::make_shared<Sonic::CGameObjectCSD>(rcPlayScreenEv, 0.5f, "HUD_B1", false), "main", pParentGameObject);
+		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spPlayScreenEv = boost::make_shared<Sonic::CGameObjectCSD>(rcPlayScreenEv, 0.5f, Configuration::uiType == Configuration::SonicType::Hedgehog ? "HUD_B1" : "HUD_B2", false), "main", pParentGameObject);
 	
 	if (rcBossScreen && !spBossScreen)
 		pParentGameObject->m_pMember->m_pGameDocument->AddGameObject(spBossScreen = boost::make_shared<Sonic::CGameObjectCSD>(rcBossScreen, 0.5f, "HUD_B1", false), "main", pParentGameObject);
@@ -213,10 +218,13 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 		Chao::CSD::CProject::DestroyScene(rcMissionScreen.Get(), rcRingCount);
 	else
 		Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcRingCount);
-
-	Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcSpeedGauge);
+	
+	if (rcSpeedGauge)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcSpeedGauge);
+	if (rcRingEnergyGauge)
 	Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcRingEnergyGauge);
-	Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcGaugeFrame);
+	if (rcGaugeFrame)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcGaugeFrame);
 	Chao::CSD::CProject::DestroyScene(rcPlayScreen.Get(), rcScoreCount);
 
 	if (rcSpeedCount)
@@ -232,6 +240,12 @@ void __fastcall CHudSonicStageRemoveCallback(Sonic::CGameObject* This, void*, So
 	Chao::CSD::CProject::DestroyScene(rcMissionScreen.Get(), rcItemCount);
 
 	Chao::CSD::CProject::DestroyScene(rcPlayScreenEv.Get(), rcRingGet);
+	if (rcScoreCountEv)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreenEv.Get(), rcScoreCountEv);
+	if (rcRingCountEv)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreenEv.Get(), rcRingCountEv);
+	if (rcRingCountEv2)
+		Chao::CSD::CProject::DestroyScene(rcPlayScreenEv.Get(), rcRingCountEv2);
 
 	Chao::CSD::CProject::DestroyScene(rcBossScreen.Get(), rcBossGaugeBG);
 	Chao::CSD::CProject::DestroyScene(rcBossScreen.Get(), rcBossGauge1);
@@ -277,7 +291,7 @@ HOOK(void, __fastcall, ProcMsgGetMissionCondition, 0xD0F130, Sonic::CGameObject*
 
 HOOK(void, __fastcall, ProcMsgNotifyLapTimeHud, 0x1097640, Sonic::CGameObject* This, void* Edx, hh::fnd::Message& in_rMsg)
 {
-	if (!rcPlayScreen)
+	if (!rcPlayScreen || !Configuration::checkpointSpeed)
 		return;
 
 	rcSpeedCount = rcPlayScreen->CreateScene("speed_count");
@@ -365,7 +379,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (flags & 0x1 && *(uint8_t*)0x1098C82 != 0xEB) // Lives (accounts for Disable Lives patch)
 	{
-		rcPlayerCount = rcPlayScreen->CreateScene("player_count");
+		rcPlayerCount = Configuration::uiType == Configuration::SonicType::Hedgehog ? rcPlayScreen->CreateScene("player_count") : rcPlayScreenEv->CreateScene("player_count");
 		rcPlayerCount->SetPosition(0.0f, 0.0f);
 	}
 	else
@@ -373,7 +387,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (flags & 0x2000) // Countdown
 	{
-		rcCountdown = rcMissionScreen->CreateScene("time_count", "conditional_timer_so");
+		rcCountdown = rcMissionScreen->CreateScene("time_count", Configuration::uiType == Configuration::SonicType::Werehog ? "conditional_timer_ev" : "conditional_timer_so");
 		FreezeMotion(rcCountdown.Get());
 	}
 
@@ -382,11 +396,27 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		if (flags & 0x2) // Time
 		{
 			if (isMission)
-				rcTimeCount = rcMissionScreen->CreateScene("time_count", "normal_so");
-			else
+				rcTimeCount = rcMissionScreen->CreateScene("time_count", Configuration::uiType == Configuration::SonicType::Werehog ? "normal_ev" : "normal_so");
+			else if (Configuration::showTime)
 			{
 				rcTimeCount = rcPlayScreen->CreateScene("time_count");
 				rcTimeCount->SetPosition(0, offset);
+
+				if (Configuration::uiType == Configuration::SonicType::Werehog)
+				{
+					rcScoreCountEv = rcPlayScreenEv->CreateScene("score_count");
+					rcScoreCountEv->SetPosition(0, offset);
+
+					// swap BG
+					rcTimeCount->GetNode("bg_1")->SetHideFlag(true);
+					rcTimeCount->GetNode("bg_2")->SetHideFlag(true);
+					rcScoreCountEv->GetNode("score_position")->SetHideFlag(true);
+					rcScoreCountEv->GetNode("score")->SetHideFlag(true);
+				}
+			}
+			else
+			{
+				offset += -50.0f;
 			}
 		}
 	}
@@ -397,7 +427,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (flags & 0x20000) // Mission Target
 	{
-		rcItemCount = rcMissionScreen->CreateScene("item_count", "conditional_meet_so");
+		rcItemCount = rcMissionScreen->CreateScene("item_count", Configuration::uiType == Configuration::SonicType::Werehog ? "conditional_meet_ev" : "conditional_meet_so");
 		FreezeMotion(rcItemCount.Get());
 
 		rcItemCount->GetNode("icons")->SetHideFlag(true);
@@ -407,7 +437,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		rcItemCount->GetNode("num_deno")->SetText(text);
 	}
 
-	if (flags & 0x200) // Boost Gauge
+	if (flags & 0x200 && Configuration::showBoost) // Boost Gauge
 	{
 		rcSpeedGauge = rcPlayScreen->CreateScene("so_speed_gauge");
 		rcRingEnergyGauge = rcPlayScreen->CreateScene("so_ringenagy_gauge");
@@ -439,6 +469,18 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 		rcScoreCount = rcPlayScreen->CreateScene("score_count");
 		rcScoreCount->SetPosition(0, offset);
+
+		if (Configuration::uiType == Configuration::SonicType::Werehog)
+		{
+			rcRingCountEv = rcPlayScreenEv->CreateScene("ring_count");
+			rcRingCountEv->SetPosition(0, offset);
+
+			// swap BG
+			rcScoreCount->GetNode("bg_1")->SetHideFlag(true);
+			rcScoreCount->GetNode("bg_2")->SetHideFlag(true);
+			rcRingCountEv->GetNode("score_position")->SetHideFlag(true);
+			rcRingCountEv->GetNode("ring")->SetHideFlag(true);
+		}
 	}
 
 	if (flags & 0x400204 || Common::GetCurrentStageID() == SMT_bsd) // Rings
@@ -447,7 +489,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 		if (!rcSpeedGauge)
 		{
 			if (isMission)
-				rcRingCount = rcMissionScreen->CreateScene("score_count", rcCountdown ? "conditional_meet_so" : "normal_so");
+				rcRingCount = rcMissionScreen->CreateScene("score_count", rcCountdown ? (Configuration::uiType == Configuration::SonicType::Werehog ? "conditional_meet_ev" : "conditional_meet_so") : (Configuration::uiType == Configuration::SonicType::Werehog ? "normal_ev" : "normal_so"));
 			else
 				rcRingCount = rcPlayScreen->CreateScene("score_count");
 
@@ -461,6 +503,18 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 			rcRingCount->SetPosition(0, offset + (rcScoreCount ? 50 : 0));
 			rcRingGet->SetPosition(0, offset + (rcScoreCount ? 50 : 0));
 
+			if (!isMission && Configuration::uiType == Configuration::SonicType::Werehog)
+			{
+				rcRingCountEv2 = rcPlayScreenEv->CreateScene("ring_count");
+				rcRingCountEv2->SetPosition(0, offset + (rcScoreCount ? 50 : 0));
+
+				// swap BG
+				rcRingCount->GetNode("bg_1")->SetHideFlag(true);
+				rcRingCount->GetNode("bg_2")->SetHideFlag(true);
+				rcRingCountEv2->GetNode("score_position")->SetHideFlag(true);
+				rcRingCountEv2->GetNode("ring")->SetHideFlag(true);
+			}
+
 			FreezeMotion(rcRingCount.Get(), false);
 		}
 		else
@@ -472,7 +526,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 
 	if (isMission)
 	{
-		rcInfoCustom = rcMissionScreen->CreateScene(rcCountdown ? "item_count" : "item_count_s", "conditional_meet_so");
+		rcInfoCustom = rcMissionScreen->CreateScene(rcCountdown ? "item_count" : "item_count_s", Configuration::uiType == Configuration::SonicType::Werehog ? "conditional_meet_ev" : "conditional_meet_so");
 		rcInfoCustom->SetHideFlag(true);
 		rcInfoCustom->GetNode("txt")->SetPatternIndex(1);
 
@@ -481,7 +535,7 @@ HOOK(void, __fastcall, CHudSonicStageDelayProcessImp, 0x109A8D0, Sonic::CGameObj
 	}
 	else
 	{
-		rcInfoCustom = rcPlayScreen->CreateScene("item_count", "conditional_meet_so");
+		rcInfoCustom = rcPlayScreen->CreateScene("item_count", Configuration::uiType == Configuration::SonicType::Werehog ? "conditional_meet_ev" : "conditional_meet_so");
 
 		float infoCustomOffset = offset + (rcScoreCount ? 50 : 0);
 		infoCustomOffset += !rcSpeedGauge && rcRingCount ? 50 : 0;
@@ -1031,7 +1085,7 @@ public:
 		Sonic::CApplicationDocument::GetInstance()->AddMessageActor("GameObject", this);
 		pGameDocument->AddUpdateUnit("f", this);
 
-		m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData("cmn_obj_oneup_HUD"));
+		m_spModel = boost::make_shared<hh::mr::CSingleElement>(hh::mr::CMirageDatabaseWrapper(spDatabase.get()).GetModelData(Configuration::uiType == Configuration::SonicType::Hedgehog ? "cmn_obj_oneup_HUD" : "cmn_obj_oneup_evil_HUD"));
 		AddRenderable("Sparkle_FB", m_spModel, false);
 	}
 

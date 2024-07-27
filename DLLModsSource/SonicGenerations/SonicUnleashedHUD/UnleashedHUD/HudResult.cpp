@@ -14,7 +14,6 @@ Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultRank;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultFooter;
 Chao::CSD::RCPtr<Chao::CSD::CScene> rcResultFooterReplay;
 
-bool m_isWerehog = false; // TODO: move this to configuration
 float m_resultTimer = 0.0f;
 HudResult::ModelType m_modelType = HudResult::ModelType::Gens;
 HudResult::ResultState m_resultState = HudResult::ResultState::Idle;
@@ -177,7 +176,8 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 	// New states
 	if (m_resultState != m_resultStateNew)
 	{
-		char const* motion_so_ev = m_isWerehog ? "Intro_ev_Anim" : "Intro_so_Anim";
+		bool const isWerehog = Configuration::uiType == Configuration::SonicType::Werehog;
+		char const* motion_so_ev = isWerehog ? "Intro_ev_Anim" : "Intro_so_Anim";
 
 		m_resultState = m_resultStateNew;
 		switch (m_resultState)
@@ -202,9 +202,7 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 
 			for (int i = 0; i < HudResult::ResultNumType::COUNT; i++)
 			{
-				switch (i)
-				{
-				case HudResult::ResultNumType::TIME:
+				if (i == HudResult::ResultNumType::TIME)
 				{
 					int millisecond = (int)(m_stageTime * 100.0f) % 100;
 					int second = (int)m_stageTime % 60;
@@ -213,48 +211,40 @@ HOOK(void, __fastcall, HudResult_CHudResultAdvance, 0x10B96D0, Sonic::CGameObjec
 					sprintf(buffer, "%02d:%02d:%02d", minute, second, millisecond);
 					rcResultNum[i]->GetNode("time_num")->SetText(buffer);
 					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
-					break;
 				}
-				case HudResult::ResultNumType::RINGS:
+				else if (i == HudResult::ResultNumType::RINGS)
 				{
 					rcResultNum[i]->GetNode("num_2")->SetText(std::to_string((int)m_stageData.m_ringScore).c_str());
 					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
-					break;
 				}
-				case HudResult::ResultNumType::SPEED:
+				else if ((i == HudResult::ResultNumType::SPEED && !isWerehog) || (i == HudResult::ResultNumType::TRICKS && isWerehog)) // enemy for werehog
 				{
 					if (HudSonicStage::scoreEnabled && !Common::IsCurrentStageBossBattle())
 					{
-						rcResultNum[i]->GetNode("num_3")->SetText(std::to_string((int)m_stageData.m_speedScore).c_str());
+						rcResultNum[i]->GetNode(isWerehog ? "num_5" : "num_3")->SetText(std::to_string((int)m_stageData.m_speedScore).c_str());
 						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					}
-					break;
 				}
-				case HudResult::ResultNumType::ENEMY:
+				else if ((i == HudResult::ResultNumType::ENEMY && !isWerehog) || (i == HudResult::ResultNumType::SPEED && isWerehog)) // combo (tricks) for werehog
 				{
 					if (HudSonicStage::scoreEnabled && !Common::IsCurrentStageBossBattle())
 					{
-						rcResultNum[i]->GetNode("num_4")->SetText(std::to_string((int)m_stageData.m_enemyScore).c_str());
+						rcResultNum[i]->GetNode(isWerehog ? "num_3" : "num_4")->SetText(std::to_string((int)m_stageData.m_enemyScore).c_str());
 						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					}
-					break;
 				}
-				case HudResult::ResultNumType::TRICKS:
+				else if ((i == HudResult::ResultNumType::TRICKS && !isWerehog) || (i == HudResult::ResultNumType::ENEMY && isWerehog)) // crush (speed) for werehog
 				{
 					if (HudSonicStage::scoreEnabled && !*pClassicSonicContext && !Common::IsCurrentStageBossBattle())
 					{
-						rcResultNum[i]->GetNode("num_5")->SetText(std::to_string((int)m_stageData.m_trickScore).c_str());
+						rcResultNum[i]->GetNode(isWerehog ? "num_4" : "num_5")->SetText(std::to_string((int)m_stageData.m_trickScore).c_str());
 						HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
 					}
-					break;
 				}
-				case HudResult::ResultNumType::TOTAL:
+				else if (i == HudResult::ResultNumType::TOTAL)
 				{
 					rcResultNum[i]->GetNode("num_6")->SetText(std::to_string(m_resultData.m_score).c_str());
 					HudResult_PlayMotion(rcResultNum[i], motion_so_ev);
-					break;
-				}
-				default: break;
 				}
 			}
 			break;

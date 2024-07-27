@@ -398,7 +398,7 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 			rcLoadingPDATxt->SetHideFlag(true);
 
 			std::srand(static_cast<unsigned int>(std::time(nullptr)));
-			int hintPattern = std::rand() % 7;
+			int hintPattern = Configuration::uiType == Configuration::SonicType::Hedgehog ? (std::rand() % 7) : (8 + (std::rand() % 9));
 			if (stageID == SMT_blb)
 			{
 				hintPattern = 7;
@@ -406,7 +406,10 @@ HOOK(void, __fastcall, HudLoading_CHudLoadingCStateIntroBegin, 0x10938F0, hh::fn
 			}
 			else
 			{
-				HudLoading_PlayMotion(rcLoadingInfo, Configuration::buttonType == Configuration::ButtonType::PS3 ? "ps3_sonic3" : "360_sonic3");
+				HudLoading_PlayMotion(rcLoadingInfo, 
+					Configuration::buttonType == Configuration::ButtonType::PS3 
+					? (Configuration::uiType == Configuration::SonicType::Hedgehog ? "ps3_sonic3" : "ps3_evil")
+					: (Configuration::uiType == Configuration::SonicType::Hedgehog ? "360_sonic3" : "360_evil"));
 			}
 
 			rcLoadingInfo->GetNode("controller")->SetHideFlag(true);

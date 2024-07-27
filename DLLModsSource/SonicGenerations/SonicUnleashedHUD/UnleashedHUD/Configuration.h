@@ -35,6 +35,11 @@ public:
 	/// </summary>
 	static WindowTitleRegion windowTitleRegion;
 
+	/// <summary>
+	/// Controlls whether to play unleashed result music.
+	/// </summary>
+	static bool unleashedResultMusic;
+
 	static enum class ButtonType : int
 	{
 		X360,
@@ -48,9 +53,16 @@ public:
 	/// </summary>
 	static ButtonType buttonType;
 
-	/// <summary>
-	/// Controlls whether to play unleashed result music.
-	/// </summary>
-	static bool unleashedResultMusic;
+	static enum class SonicType : int
+	{
+		Hedgehog,
+		Werehog
+	};
+
+	static SonicType uiType;
+
+	static bool checkpointSpeed;
+	static bool showTime;
+	static bool showBoost;
 };
 
