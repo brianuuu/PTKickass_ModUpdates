@@ -611,7 +611,7 @@ public:
 		AddRenderable("Sparkle_FB", m_spModel, false);
 
 		constexpr float speed = 4.2f;
-		float angle = ((float)std::rand() / RAND_MAX) * PI;
+		float angle = ((float)std::rand() / (float)RAND_MAX) * (float)PI;
 		float width = (float)*(size_t*)0x1DFDDDC;
 		float height = (float)*(size_t*)0x1DFDDE0;
 		m_2DVelocity = hh::math::CVector2(std::cosf(angle) / width * height, std::sinf(angle)) * speed;
@@ -1207,15 +1207,15 @@ HOOK(void, __fastcall, ProcMsgDamageModern, 0xE27890, uint32_t* This, void* Edx,
 //---------------------------------------------------
 // Boss Health
 //---------------------------------------------------
-void HudSonicStage_BossSetHealth(float health, float maxHealth)
+void HudSonicStage_BossSetHealth(int health, int maxHealth)
 {
-    bossGauge1Frame = health * 100.0f / maxHealth;
+    bossGauge1Frame = (float)health * 100.0f / (float)maxHealth;
 	bossGauge1Frame = max(0.0f, min(100.0f, bossGauge1Frame));
 }
 
-void HudSonicStage_BossSetBreakPoint(float health, float maxHealth)
+void HudSonicStage_BossSetBreakPoint(int health, int maxHealth)
 {
-	bossGaugeBreakPointFrame = health * 100.0f / maxHealth;
+	bossGaugeBreakPointFrame = (float)health * 100.0f / (float)maxHealth;
 	bossGaugeBreakPointFrame = max(0.0f, min(100.0f, bossGaugeBreakPointFrame));
 }
 
